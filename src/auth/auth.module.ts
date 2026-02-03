@@ -5,13 +5,26 @@ import { JwtStrategy } from 'src/common/strategies/jwt.strategy';
 import { configDotenv } from 'dotenv';
 import { UserModule } from 'src/common/schemas/user/user.module';
 import { CrewModule } from 'src/crew/crew.module';
+import { OAuth2Client } from 'google-auth-library';
 configDotenv()
 
 
 @Module({
-  imports: [UserModule, CrewModule],
+  imports: [UserModule, CrewModule,],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    {
+      provide: OAuth2Client,
+      useFactory: () => {
+        return new OAuth2Client({
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        });
+      },
+    }
+  ],
   exports: [JwtStrategy],
 })
 export class AuthModule { }

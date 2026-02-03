@@ -78,7 +78,7 @@ export class User {
   @Prop({ trim: true })
   password?: string;
 
-  @Prop({ unique: true, sparse: true })
+  @Prop({ type: String, unique: true, sparse: true })
   googleId?: string;
 
   @Prop({ type: Number, select: true, default: 0 })

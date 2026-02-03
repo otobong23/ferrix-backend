@@ -16,7 +16,11 @@ export class AuthController {
   async signup(@Body() createAuthDto: Signup) {
     return this.authService.signup(createAuthDto);
   }
-  @Post('google')
+  @Post('google/signup')
+  async googleSignup(@Body('token') token: string, @Body('referral_code') referral_code: string) {
+    return this.authService.googleSignup(token, referral_code)
+  }
+  @Post('google/login')
   async googleLogin(@Body('token') token: string) {
     return this.authService.googleLogin(token)
   }

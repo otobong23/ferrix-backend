@@ -26,9 +26,7 @@ export class AuthService {
     private crewService: CrewService,
     private jwtService: JwtService,
     private googleClient: OAuth2Client
-  ) {
-    this.googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  }
+  ) { }
 
   private async generateUniqueUserID(): Promise<string> {
     let userID: string;
@@ -48,7 +46,53 @@ export class AuthService {
     return userID!;
   }
 
-  //login service functionalities 
+  private async handleReferrer(referral_code?: string) {
+    if (!referral_code) return undefined;
+
+    const referrer = await this.userModel.findOne({ referral_code });
+    if (!referrer) throw new BadRequestException('Invalid referral code');
+
+    await this.userModel.findByIdAndUpdate(referrer._id, {
+      $inc: { referral_count: 1 },
+    });
+
+    return referrer.referral_code;
+  }
+
+  private async createCrewIfNotExists(user: UserDocument) {
+    const existingCrew = await this.crewService.getUserCrew(user.email);
+    if (!existingCrew) await this.crewService.createCrew(user);
+  }
+
+  private generateJwt(user: UserDocument) {
+    const payload = { userID: user.userID, email: user.email, sub: user._id };
+    return this.jwtService.sign(payload);
+  }
+
+  private formatAuthResponse(user: UserDocument, message = 'login successful') {
+    return {
+      success: true,
+      access_token: this.generateJwt(user),
+      user: {
+        userID: user.userID,
+        email: user.email,
+        sub: user._id,
+        expires_in: 30 * 24 * 60 * 60, // 30 days in seconds
+      },
+      message,
+    };
+  }
+
+  private async verifyGoogleToken(token: string) {
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    return ticket.getPayload();
+  }
+
+  //Normal Auth
   //start
   async validateUser({ email, password }: Login): Promise<any> {
     const user = await this.userModel.findOne({ email });
@@ -58,114 +102,119 @@ export class AuthService {
     }
     throw new UnauthorizedException('Invalid credentials');
   }
-  async login(user) {
-    const payload = { username: user.username, email: user.email };
-    const getCrew = await this.crewService.getUserCrew(user.email);
-    if (!getCrew) await this.crewService.createCrew(user)
-    return {
-      success: true,
-      access_token: this.jwtService.sign(payload),
-      message: 'login successful'
-    };
+  async login(user: UserDocument) {
+    await this.createCrewIfNotExists(user);
+    return this.formatAuthResponse(user);
   }
-  //end
 
-  //signup service functionalities
-  //start
   async signup(signup: Signup) {
     const { email, fullName, DOB, password, referral_code } = signup;
-    const existingUser = await this.userModel.findOne({ email });
-    if (existingUser) {
+
+    if (await this.userModel.findOne({ email })) {
       throw new ConflictException('User already exists');
     }
-    const checkEmail = await this.userModel.findOne({ email });
-    if (checkEmail) throw new ConflictException('User already exists');
 
     const hashedPassword = await doHash(password, 10);
-
-    let referredBy: string | undefined;
-    if (referral_code) {
-      const referrer = await this.userModel.findOne({ referral_code });
-      if (!referrer) {
-        throw new BadRequestException('Invalid referral code');
-      }
-      referredBy = referrer.referral_code;
-
-      await this.userModel.findByIdAndUpdate(referrer._id, {
-        $inc: { referral_count: 1 },
-      });
-    }
-
-    // Generate unique userID
+    const referredBy = await this.handleReferrer(referral_code);
     const userID = await this.generateUniqueUserID();
+
     const newUser = new this.userModel({
       userID,
       email,
       fullName,
       DOB,
-      username: fullName.split(' ').join('_')+userID,
+      username: `${fullName.split(' ').join('_')}_${userID}`,
       password: hashedPassword,
-      referral_code: userID, // user's referral code is their own userID
+      referral_code: userID,
       referredBy,
     });
+
     await newUser.save();
     await this.crewService.createCrew(newUser);
 
-    // Update the referrers' crew levels (up to 3 levels)
     if (referral_code) {
       await this.crewService.updateCrew(referral_code, newUser);
     }
 
-    const payload = { username: newUser.username, email: newUser.email };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    return this.formatAuthResponse(newUser);
   }
 
   //end
 
   //Google service functionalities
   //start
-   private async verifyGoogleToken(token: string) {
-    const ticket = await this.googleClient.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
 
-    return ticket.getPayload();
-  }
 
   async googleLogin(token: string) {
-    const payload = await this.verifyGoogleToken(token);
+    const ticket = await this.verifyGoogleToken(token);
+    if (!ticket) throw new UnauthorizedException('Invalid Google token');
 
-    if (!payload) throw new ConflictException('failed to continue with Google');
+    const { sub } = ticket;
+    const user = await this.userModel.findOne({ googleId: sub });
 
-    const { email, name, sub, picture } = payload
-    // const hashedPassword = await doHash(password, 10);
+    if (!user) {
+      throw new UnauthorizedException(
+        'Google account not linked. Please sign up first.',
+      );
+    }
 
-    let user = await this.userModel.findOne({ googleId: sub });
+    return this.formatAuthResponse(user);
+  }
 
-    if (user) {
-      // Generate unique userID
+  async googleSignup(token: string, referral_code?: string) {
+    const ticket = await this.verifyGoogleToken(token);
+    if (!ticket) throw new UnauthorizedException('Invalid Google token');
+
+    const { email, sub, picture, name } = ticket;
+
+    // Find existing user by email
+    let user = await this.userModel.findOne({ email });
+
+    // If already linked to this Google → conflict
+    if (user?.googleId && user.googleId === sub) {
+      throw new ConflictException('Account already exists. Please login.');
+    }
+
+    // If email linked to another Google account → block
+    if (user?.googleId && user.googleId !== sub) {
+      throw new UnauthorizedException(
+        'Email already linked to another Google account',
+      );
+    }
+
+    // Link existing user without googleId
+    if (user && !user.googleId) {
+      user.googleId = sub;
+      user.profileImage = picture ?? user.profileImage;
+      await user.save();
+    }
+
+    // Create new user if none exists
+    if (!user) {
       const userID = await this.generateUniqueUserID();
-      const newUser = new this.userModel({
+      const referredBy = await this.handleReferrer(referral_code);
+
+      user = new this.userModel({
         userID,
         email,
         googleId: sub,
         profileImage: picture,
-        username: name?.split(' ').join('_'),
-        referral_code: userID, // user's referral code is their own userID
+        username: `${name?.split(' ').join('_')}_${userID}`,
+        referral_code: userID,
+        referredBy,
       });
-      await newUser.save();
-      await this.crewService.createCrew(newUser);
+
+      await user.save();
+      await this.crewService.createCrew(user);
+
+      if (referral_code) {
+        await this.crewService.updateCrew(referral_code, user);
+      }
     }
 
-    return {
-      success: true,
-      access_token: this.jwtService.sign(payload),
-      message: 'login successful'
-    };
+    return this.formatAuthResponse(user);
   }
+
 
   //end
 
@@ -228,5 +277,5 @@ export class AuthService {
   }
   //end
 
- 
+
 }
