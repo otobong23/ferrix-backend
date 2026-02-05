@@ -77,7 +77,7 @@ export class AuthService {
         userID: user.userID,
         email: user.email,
         sub: user._id,
-        expires_in: 30 * 24 * 60 * 60, // 30 days in seconds
+        expires_at: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
       },
       message,
     };
@@ -225,38 +225,45 @@ export class AuthService {
     if (!existingUser) {
       throw new NotFoundException("User doesn't exists");
     }
-    const code = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const code = Math.floor(Math.random() * 10000).toString().padStart(6, '0');
     const info = await sendResetMail(email, existingUser.username, code)
     if (!info) {
       throw new InternalServerErrorException(`Failed to send to Code to ${email}`)
     }
     existingUser.forgotPasswordCode = code
-    existingUser.forgotPasswordCodeValidation = Date.now()
+    existingUser.forgotPasswordCodeExpiresAt = Date.now() + 10 * 60 * 60 * 1000
     existingUser.save()
 
-    return { message: 'Code Sent Successfully!' }
+    return { success: true, message: 'Code Sent Successfully!' }
   }
   //end
 
   //verifyCode service functionalities
   //start
   async verifyCode(email, code) {
-    const existingUser = await this.userModel.findOne({ email }).select('+forgotPasswordCode +forgotPasswordCodeValidation')
+    const existingUser = await this.userModel.findOne({ email }).select('+forgotPasswordCode +forgotPasswordCodeExpiresAt')
     if (!existingUser) {
       throw new NotFoundException("User doesn't exists");
     }
-    if (!existingUser.forgotPasswordCode || !existingUser.forgotPasswordCodeValidation) {
+    if (!existingUser.forgotPasswordCode || !existingUser.forgotPasswordCodeExpiresAt) {
       throw new InternalServerErrorException('Something Went Wrong')
     }
-    if (Date.now() - new Date(existingUser.forgotPasswordCodeValidation).getTime() > 10 * 60 * 1000) {
-      throw new RequestTimeoutException('Code Has Been Expired!')
+    if (Date.now() > existingUser.forgotPasswordCodeExpiresAt) {
+      throw new RequestTimeoutException('Code Has Expired!')
     }
     if (code === existingUser.forgotPasswordCode) {
       existingUser.forgotPasswordCode = undefined
-      existingUser.forgotPasswordCodeValidation = undefined
+      existingUser.forgotPasswordCodeExpiresAt = undefined
       await existingUser.save()
-      const token = this.jwtService.sign({ email }, { expiresIn: '10m' });
-      return { token }
+      const token = this.jwtService.sign({
+        sub: existingUser._id,
+        email,
+        purpose: 'password-reset',
+      }, {
+        secret: process.env.JWT_RESET_SECRET,
+        expiresIn: '10m'
+      });
+      return { success: true, message: 'Code verified Successfully!!!', password_token: token }
     } else {
       throw new ConflictException('Code is Invalid')
     }

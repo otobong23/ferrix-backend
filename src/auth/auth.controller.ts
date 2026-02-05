@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, UseGuards, Req } from '@nestjs/comm
 import { AuthService } from './auth.service';
 import { Login, sendVerification, Signup } from './dto/auth.types';
 import { JwtAuthGuard } from 'src/common/strategies/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -25,7 +26,7 @@ export class AuthController {
     return this.authService.googleLogin(token)
   }
 
-  
+
 
   // @UseGuards(JwtAuthGuard)
   // @Patch('signout')
@@ -45,8 +46,8 @@ export class AuthController {
 
 
   @Patch('change-password')
-  @UseGuards(JwtAuthGuard)
-  changePassword(@Body() { newPassword }:{ newPassword: string }, @Req() req) {
+  @UseGuards(AuthGuard('jwt-reset-password'))
+  changePassword(@Body() { newPassword }: { newPassword: string }, @Req() req) {
     const email = req.user.email;
     return this.authService.updatePassword(email, newPassword);
   }

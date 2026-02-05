@@ -6,6 +6,7 @@ import { configDotenv } from 'dotenv';
 import { UserModule } from 'src/common/schemas/user/user.module';
 import { CrewModule } from 'src/crew/crew.module';
 import { OAuth2Client } from 'google-auth-library';
+import ResetPasswordStrategy from 'src/common/strategies/ResetPasswordStrategy';
 configDotenv()
 
 
@@ -15,6 +16,7 @@ configDotenv()
   providers: [
     AuthService,
     JwtStrategy,
+    ResetPasswordStrategy,
     {
       provide: OAuth2Client,
       useFactory: () => {
@@ -25,6 +27,6 @@ configDotenv()
       },
     }
   ],
-  exports: [JwtStrategy],
+  exports: [JwtStrategy, ResetPasswordStrategy],
 })
 export class AuthModule { }

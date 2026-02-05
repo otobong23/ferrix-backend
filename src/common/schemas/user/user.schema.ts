@@ -118,7 +118,7 @@ export class User {
   forgotPasswordCode?: string;
 
   @Prop({ type: Number, select: false, default: undefined })
-  forgotPasswordCodeValidation?: number;
+  forgotPasswordCodeExpiresAt?: number;
 
   @Prop({ required: true })
   referral_code?: string;
