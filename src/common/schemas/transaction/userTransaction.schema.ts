@@ -24,6 +24,9 @@ export class UserTransaction {
   @Prop({ required: true })
   amount: number;
 
+  @Prop({ type: Number })
+  displayAmount: number
+
   @Prop({ type: String })
   plan: string
 
