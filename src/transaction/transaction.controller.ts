@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req, BadRequestException, Get, Query, ParseIntPipe, Patch } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, Get, Query, ParseIntPipe, ForbiddenException, Logger } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/common/strategies/jwt-auth.guard';
 import { TransactionService } from './transaction.service';
 import { DepositDto, getPlanDTO, ResolveDetailsDTO, UseBalanceDTO, WithdrawDto } from './dto/transaction.dto';
@@ -8,15 +8,21 @@ import { DepositDto, getPlanDTO, ResolveDetailsDTO, UseBalanceDTO, WithdrawDto }
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) { }
 
-  @Post('deposit')
-  async deposit(@Body() depositDto: DepositDto, @Req() req) {
-    const email = req.user.email;
-    const { image } = depositDto;
 
-    if (image.length > 10 * 1024 * 1024) {
-      throw new BadRequestException('File too large');
-    }
-    return await this.transactionService.deposit(depositDto, email);
+  @Post('create')
+  async createPayment(@Req() req, @Body() body: { amount: number }) {
+    const email = req.user.email;
+    const order = await this.transactionService.generatePaymentAddress(body.amount, email);
+
+    return order;
+  }
+
+  @Post('create-deposit-transaction')
+  async createDepositTransaction(@Body() body: { orderID: string }, @Req() req) {
+    const email = req.user.email;
+    const { orderID } = body;
+    if (!orderID) throw new ForbiddenException('orderID is required');
+    return await this.transactionService.createDepositTransaction(orderID, email);
   }
 
   @Post('withdraw')

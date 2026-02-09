@@ -7,9 +7,10 @@ import { UserTransactionModule } from 'src/common/schemas/transaction/userTransa
 import { UserCrewModule } from 'src/common/schemas/crew/userCrew.module';
 import { CrewModule } from 'src/crew/crew.module';
 import { HttpModule } from '@nestjs/axios';
+import { UserOrderModule } from 'src/common/schemas/order/userOrder.module';
 
 @Module({
-  imports: [ UserModule, UserTransactionModule, UserCrewModule, CrewModule, HttpModule ],
+  imports: [ UserModule, UserOrderModule, UserTransactionModule, UserCrewModule, CrewModule, HttpModule ],
   controllers: [TransactionController],
   providers: [TransactionService, JwtStrategy],
   exports: [TransactionService]

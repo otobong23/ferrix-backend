@@ -108,7 +108,7 @@ export class AuthService {
   }
 
   async signup(signup: Signup) {
-    const { email, fullName, DOB, password, referral_code } = signup;
+    const { email, fullName, DOB, password, referral_code, phone } = signup;
 
     if (await this.userModel.findOne({ email })) {
       throw new ConflictException('User already exists');
@@ -127,6 +127,7 @@ export class AuthService {
       password: hashedPassword,
       referral_code: userID,
       referredBy,
+      whatsappNo: phone
     });
 
     await newUser.save();

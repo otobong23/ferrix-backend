@@ -104,6 +104,9 @@ export class CrewService {
     if (!crew) return null
 
     return {
+      userID: crew.userID,
+      ownerUsername: crew.ownerUsername,
+      ownerReferralCode: crew.ownerReferralCode,
       totalMembers: crew.totalMembers,
       totalCrewDeposits: crew.totalCrewDeposits,
       totalCrewWithdrawals: crew.totalCrewWithdrawals,
@@ -131,7 +134,7 @@ export class CrewService {
     let currentRefCode = user.referredBy;
     let level = 1;
 
-    while (currentRefCode && level <= 10) {
+    while (currentRefCode && level <= 3) {
       const referrer = await this.userModel.findOne({ referral_code: currentRefCode });
       if (!referrer) break;
 
@@ -180,15 +183,15 @@ export class CrewService {
  * @description Generic function to award referral bonuses (alternative approach)
  * @export
  */
-  async awardReferralBonus(userID: string, amount: number, bonusType: 'first_deposit' | 'mining_profit', coin: string = 'USDT') {
+  async awardReferralBonus(userID: string, amount: number, bonusType: 'first_deposit', coin: string = 'USDT') {   //  | 'mining_profit' was removed to focus on deposit bonuses only
     const user = await this.userModel.findOne({ userID });
     if (!user || !user.referredBy) return;
 
-    const bonusPercentages = [0.05, 0.03, 0.01]; // 5%, 3%, 1%
-    const bonusTypeMap = {
-      'first_deposit': 'Deposit',
-      'mining_profit': 'Mining'
-    };
+    const bonusPercentages = [0.05, 0.02, 0.01]; // 5%, 3%, 1%
+    // const bonusTypeMap = {
+    //   'first_deposit': 'Deposit',
+    //   'mining_profit': 'Mining'
+    // };
 
     let currentRefCode: string | undefined = user.referredBy;
     let level = 1;

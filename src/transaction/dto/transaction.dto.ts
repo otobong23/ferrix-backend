@@ -21,14 +21,14 @@ export class WithdrawDto {
    @IsString()
    walletAddress: string;
 
-   @IsNotEmpty()@IsString()
-   accountNumber: string;
+   // @IsNotEmpty()@IsString()
+   // accountNumber: string;
 
-   @IsNotEmpty()@IsString()
-   accountName: string;
+   // @IsNotEmpty()@IsString()
+   // accountName: string;
 
-   @IsNotEmpty()@IsString()
-   bankName: string;
+   // @IsNotEmpty()@IsString()
+   // bankName: string;
 
 }
 

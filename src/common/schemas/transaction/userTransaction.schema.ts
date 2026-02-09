@@ -30,6 +30,9 @@ export class UserTransaction {
   @Prop({ default: 'pending', enum: ['pending', 'completed', 'failed'] })
   status: string;
 
+  @Prop({ type: String })
+  orderID: string;
+
   @Prop({ default: 'USDT' })
   Coin: string; // e.g. 'USDT', 'BTC'
 
