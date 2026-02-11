@@ -14,48 +14,33 @@ class withdrawalWallet {
   amount: number
 }
 
-@Schema({ timestamps: true, _id: false })
-class depositWallet {
-  @Prop()
-  amount: number
 
-  @Prop()
-  coin: string
-
-  @Prop()
-  recieptImage: string
-}
-
-
-@Schema({ timestamps: true, _id: false })
+@Schema({ timestamps: true }) // timestamps MUST be here
 export class Tier {
-  @Prop({ required: true })
-  type: string;
 
   @Prop({ required: true })
-  title: string;
+  name: string;
 
-  @Prop({
-    type: {
-      price: { type: String, required: true },
-      daily_yield: { type: String, required: true },
-      duration: { type: String, required: true },
-      roi: { type: String, required: true },
-      purchase_limit: { type: String, required: true },
-    },
-    required: true,
-  })
-  details: {
-    price: string;
-    daily_yield: string;
-    duration: string;
-    roi: string;
-    purchase_limit: string;
-  };
+  @Prop({ required: true })
+  package_level: string;
 
-  @Prop()
-  expiring_date?: string;
+  @Prop({ type: Number, required: true })
+  price: number;
+
+  @Prop({ type: Number, required: true })
+  contract_duration_in_days: number;
+
+  @Prop({ type: Number, required: true })
+  daily_rate: number;
+
+  @Prop({ required: true, type: Number })
+  total_revenue: number;
+
+  @Prop({ type: String })
+  expiring_At?: string;
 }
+
+export const TierSchema = SchemaFactory.createForClass(Tier);
 
 
 @Schema({ timestamps: true })
@@ -96,10 +81,10 @@ export class User {
   @Prop({ type: Number, select: true, default: 0 })
   transactionCount: number;
 
-  @Prop({ type: [Tier], default: [] })
+  @Prop({ type: [TierSchema], default: [] })
   currentPlan: Tier[];
 
-  @Prop({ type: [Tier], default: [] })
+  @Prop({ type: [TierSchema], default: [] })
   previousPlan: Tier[];
 
   @Prop({ type: String, default: '' })

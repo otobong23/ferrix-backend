@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { User, UserDocument } from 'src/common/schemas/user/user.schema';
-import { Model, Connection, ClientSession } from 'mongoose';
+import { Model, Connection } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Crew, CrewDocument, CrewMember } from 'src/common/schemas/crew/userCrew.schema';
 import { UserTransaction, UserTransactionDocument } from 'src/common/schemas/transaction/userTransaction.schema';
@@ -49,7 +49,7 @@ export class CrewService {
         totalDeposits: user.totalDeposit,
         totalWithdrawals: user.totalWithdraw,
         transactionCount: user.transactionCount,
-        currentPlan: user.currentPlan.map(item => item.title),
+        currentPlan: user.currentPlan.map(item => item.name),
       };
 
       const levelKey = `level_${level}` as keyof Crew;

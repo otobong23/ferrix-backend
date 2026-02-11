@@ -5,24 +5,18 @@ import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Crew, CrewDocument } from 'src/common/schemas/crew/userCrew.schema';
 import { CrewService } from 'src/crew/crew.service';
-import { CreateTierDto } from './dto/create-profile.dto';
+import { TierDetailsDto } from './dto/create-profile.dto';
 import { UserTransaction, UserTransactionDocument } from 'src/common/schemas/transaction/userTransaction.schema';
 import { Admin, AdminDocument } from 'src/common/schemas/admin/userAdmin.schema';
 
-type TIER_LIST_TYPE = {
-  type: string
-  title: string,
-  image?: string,
-  icon?: string
-  details: {
-    price: string,
-    daily_yield: string,
-    duration: string,
-    roi: string,
-    purchase_limit: string
-  }
-  expiring_date?: string
-  createdAt?: string
+export type TIER_LIST_TYPE = {
+  name: string;
+  package_level: string;
+  price: number;
+  contract_duration_in_days: number;
+  daily_rate: number;
+  total_revenue: number;
+  expiring_At: string;
 }
 
 
@@ -72,17 +66,26 @@ export class ProfileService {
 
   private async handleExpiredPlans(email: string): Promise<void> {
     const user = await this.userModel.findOne({ email });
-    if (!user) throw new NotFoundException('User not found, please login');
+    if (!user) {
+      throw new NotFoundException('User not found, please login');
+    }
 
     const now = new Date();
 
     const stillActivePlans: TIER_LIST_TYPE[] = [];
     const expiredPlans: TIER_LIST_TYPE[] = [];
 
-    for (const plan of user.currentPlan) {
-      const expiringDate = plan.expiring_date ? new Date(plan.expiring_date) : null;
+    for (const plan of user.currentPlan as TIER_LIST_TYPE[]) {
 
-      if (expiringDate && expiringDate <= now) {
+      if (!plan.expiring_At) {
+        // Safety fallback: if expiring_At is missing, keep it active
+        stillActivePlans.push(plan);
+        continue;
+      }
+
+      const expirationDate = new Date(plan.expiring_At);
+
+      if (expirationDate <= now) {
         expiredPlans.push(plan);
       } else {
         stillActivePlans.push(plan);
@@ -95,7 +98,6 @@ export class ProfileService {
       await user.save();
     }
   }
-
 
   async getUserProfileByUserID(userID: string) {
     const existingUser = await this.userModel.findOne({ userID })
@@ -143,7 +145,7 @@ export class ProfileService {
     }
   }
 
-  async updateCurrentPlan(email, newPlan: Partial<CreateTierDto>) {
+  async updateCurrentPlan(email, newPlan: Partial<TierDetailsDto>) {
     const existingUser = await this.userModel.findOneAndUpdate({ email }, { $push: { currentPlan: newPlan } }, { new: true })
     if (!existingUser) throw new NotFoundException('User not Found, please signup');
     if (existingUser.ActivateBot) {
