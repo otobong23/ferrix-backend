@@ -22,7 +22,7 @@ import { AdminModule } from './admin/admin.module';
       signOptions: { expiresIn: '30d' },
     }),
     // AuthModule,
-    // TransactionModule,
+    TransactionModule,
     // CrewModule,
     // ProfileModule,
     // AdminModule
