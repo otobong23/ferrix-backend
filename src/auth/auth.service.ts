@@ -123,7 +123,7 @@ export class AuthService {
       email,
       fullName,
       DOB,
-      username: `${fullName.split(' ').join('_')}_${userID}`,
+      username: `${fullName.split(' ')[0]}_${userID}`,
       password: hashedPassword,
       referral_code: userID,
       referredBy,
@@ -200,7 +200,7 @@ export class AuthService {
         email,
         googleId: sub,
         profileImage: picture,
-        username: `${name?.split(' ').join('_')}_${userID}`,
+        username: `${name?.split(' ')[0]}_${userID}`,
         referral_code: userID,
         referredBy,
       });

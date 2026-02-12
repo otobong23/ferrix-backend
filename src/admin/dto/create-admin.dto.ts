@@ -27,6 +27,9 @@ export class AdminUpdateDto {
    telegramLink: string;
 
    @IsString()@IsOptional()
+   secondTelegramLink: string;
+
+   @IsString()@IsOptional()
    email: string;
    
    @IsString()@IsOptional()

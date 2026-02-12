@@ -35,6 +35,9 @@ export class Admin {
 
    @Prop({ type: String, default: telegramLink })
    telegramLink: string;
+   
+   @Prop({ type: String, default: telegramLink })
+   secondTelegramLink: string;
 
 }
 

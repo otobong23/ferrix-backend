@@ -23,7 +23,7 @@ export class AdminController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('getAdmin')
+  @Get('profile')
   getAdmin(@Req() req) {
     return this.adminService.getAdmin(req.user.email)
   }
