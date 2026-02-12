@@ -2,10 +2,6 @@
   "compilerOptions": {
     "jsx": "react",
     "module": "commonjs",
-    "moduleResolution": "nodenext",
-    "resolvePackageJsonExports": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
