@@ -54,24 +54,31 @@ export class AdminService {
   // }
 
   async login(adminLogindto: AdminLoginDto) {
-    const USERNAME = process.env.EMAIL_USER
+    const EMAIL = process.env.EMAIL_USER
     const existingAdmin = await this.adminModel.findOne()
 
     if (!existingAdmin) {
-      if (USERNAME === adminLogindto.username) {
-        const newAdmin = new this.adminModel({ email: USERNAME })
+      if (EMAIL === adminLogindto.email) {
+        const newAdmin = new this.adminModel({ email: EMAIL })
         await newAdmin.save()
       } else {
         throw new UnauthorizedException('Invalid credentials');
       }
     }
-    if (existingAdmin?.password !== adminLogindto.password.trim() && existingAdmin?.email !== adminLogindto.username.trim()) {
+    if (existingAdmin?.password !== adminLogindto.password.trim() && existingAdmin?.email !== adminLogindto.email.trim()) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
     return {
       success: true,
-      access_token: this.jwtService.sign({ email: adminLogindto.username, password: adminLogindto.password }),
-      message: 'login successful'
+      access_token: this.jwtService.sign({ email: adminLogindto.email, password: adminLogindto.password }),
+      user: {
+        userID: existingAdmin.toObject()._id,
+        email: existingAdmin.toObject().email,
+        sub: existingAdmin.toObject()._id,
+        expires_at: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
+      },
+      message: 'login successful',
     };
   }
 

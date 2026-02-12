@@ -4,7 +4,7 @@ export class CreateAdminDto { }
 
 export class AdminLoginDto {
    @IsString() @IsNotEmpty()
-   username: string;
+   email: string;
 
    @IsString() @IsNotEmpty()
    password: string
