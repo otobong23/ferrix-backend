@@ -5,7 +5,7 @@ import { config } from 'dotenv';
 import * as bodyParser from 'body-parser';
 config()
 
-const port = Number(process.env.PORT) || 4000;
+const port = process.env.PORT || 4000;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

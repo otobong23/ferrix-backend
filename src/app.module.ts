@@ -10,6 +10,8 @@ import { TransactionModule } from './transaction/transaction.module';
 import { CrewModule } from './crew/crew.module';
 import { ProfileModule } from './profile/profile.module';
 import { AdminModule } from './admin/admin.module';
+import { configDotenv } from 'dotenv';
+configDotenv()
 
 @Module({
   imports: [
@@ -21,7 +23,7 @@ import { AdminModule } from './admin/admin.module';
       secret: process.env.JWT_SECRET!,
       signOptions: { expiresIn: '30d' },
     }),
-    // AuthModule,
+    AuthModule,
     TransactionModule,
     // CrewModule,
     // ProfileModule,
