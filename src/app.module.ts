@@ -25,9 +25,9 @@ configDotenv()
     }),
     AuthModule,
     TransactionModule,
-    // CrewModule,
-    // ProfileModule,
-    // AdminModule
+    CrewModule,
+    ProfileModule,
+    AdminModule
   ],
   controllers: [AppController],
   providers: [AppService],
