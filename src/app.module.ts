@@ -24,10 +24,10 @@ configDotenv()
       signOptions: { expiresIn: '30d' },
     }),
     AuthModule,
-    TransactionModule,
-    // CrewModule,
-    // ProfileModule,
-    // AdminModule
+    // TransactionModule,
+    // // CrewModule,
+    // // ProfileModule,
+    // // AdminModule
   ],
   controllers: [AppController],
   providers: [AppService],
