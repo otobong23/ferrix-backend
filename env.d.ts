@@ -1,14 +1,22 @@
 declare namespace NodeJS {
   interface ProcessEnv {
+    PORT: string; // env variables are always strings
     MONGO_DB: string;
+
     JWT_SECRET: string;
-    PORT: number;
-    EMAIL_HOST: string;
-    EMAIL_PORT: number;
+    JWT_RESET_SECRET: string;
+
+    EMAIL_HOST?: string;
+    EMAIL_PORT?: string;
     EMAIL_USER: string;
     EMAIL_PASS: string;
-    FLUTTERWAVE_PUBLIC_KEY: string;
-    FLUTTERWAVE_SECRET_KEY: string;
-    FLUTTERWAVE_ENCRYPTION_KEY: string;
+
+    GOOGLE_Client_ID: string;
+    GOOGLE_Client_Secret: string;
+
+    BLOCKONOMICS_API_KEY: string;
+    BLOCKONOMICS_CALLBACK_SECRET: string;
+
+    NODE_ENV: "development" | "production" | "test";
   }
 }
