@@ -21,7 +21,7 @@ import { AdminModule } from './admin/admin.module';
       secret: process.env.JWT_SECRET!,
       signOptions: { expiresIn: '30d' },
     }),
-    AuthModule,
+    // AuthModule,
     // TransactionModule,
     // CrewModule,
     // ProfileModule,
