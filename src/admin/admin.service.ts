@@ -383,6 +383,6 @@ export class AdminService {
   async globalData() {
     const existingAdmin = await this.adminModel.findOne()
     if (!existingAdmin) throw new NotFoundException('Admin not Found, please signup')
-    return { walletAddress: existingAdmin.walletAddress, whatsappLink: existingAdmin.whatsappLink, telegramLink: existingAdmin.telegramLink }
+    return { walletAddress: existingAdmin.walletAddress, whatsappLink: existingAdmin.whatsappLink, telegramLink: existingAdmin.telegramLink, secondTelegramLink: existingAdmin.secondTelegramLink }
   }
 }
