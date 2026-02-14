@@ -74,9 +74,9 @@ export class AuthService {
       success: true,
       access_token: this.generateJwt(user),
       user: {
-        userID: user.toObject().userID,
-        email: user.toObject().email,
-        sub: user.toObject()._id,
+        userID: user.userID,
+        email: user.email,
+        sub: user._id,
         expires_at: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
       },
       message,
