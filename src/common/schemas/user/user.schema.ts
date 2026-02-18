@@ -139,7 +139,10 @@ export class User {
   depositAddress: string
 
   @Prop({ type: String, default: undefined })
-  twentyFourHourTimerStart: string
+  twentyFourHourTimerStart: string  // when 24h mining started
+
+  @Prop({ type: String, default: undefined })
+  lastMineClaimAt: number | null   // last successful claim
 
   @Prop({ type: Number, default: Date.now() })
   spinWheelTimerStart: number

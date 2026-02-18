@@ -133,6 +133,12 @@ export class AdminController {
     return await this.adminService.deleteUserCascade(userID)
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Patch('toggleUserBot')
+  async toggleUserBot(@Query('email') email: string) {
+    return await this.adminService.toggleUserBot(email)
+  }
+
   @Get('globalData')
   async globalData() {
     return await this.adminService.globalData()

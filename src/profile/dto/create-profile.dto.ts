@@ -65,6 +65,10 @@ export class CreateTierDto {
 
   @IsOptional()
   @IsNumber()
+  balance?: number;
+
+  @IsOptional()
+  @IsNumber()
   referral_count?: number;
 
   @IsOptional()

@@ -47,17 +47,18 @@ export class ProfileService {
     if (!existingUser) throw new NotFoundException('User not found');
     const existingUserCrew = await this.crewService.getUserCrew(email);
     if (!existingUserCrew) throw new NotFoundException('User crew not found');
-    const tc = existingUserCrew.totalCrewDeposits ?? 0;
+    const level_1_referrals = existingUserCrew.members.level_1.length ?? 0;
+    const total_referrals = existingUserCrew.totalMembers
     let meter = 0;
 
-    if (tc < 3000) {
-      meter = Math.round((tc / 3000) * 100);
-    } else if (tc >= 3000 && tc < 5000) {
-      meter = Math.round(((tc - 3000) / 2000) * 100);
-    } else if (tc >= 5000 && tc < 10000) {
-      meter = Math.round(((tc - 5000) / 5000) * 100);
+    if (level_1_referrals >= 10 && total_referrals >= 50) {
+      meter = 1;
+    } else if (level_1_referrals >= 30 && total_referrals >= 100) {
+      meter = 2;
+    } else if (level_1_referrals >= 50 && total_referrals >= 200) {
+      meter = 3;
     } else {
-      meter = 100;
+      meter = 3;
     }
 
     existingUser.meter = meter;

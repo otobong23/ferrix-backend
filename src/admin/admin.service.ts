@@ -192,6 +192,30 @@ export class AdminService {
     return { ...existingUser.toObject(), ...updateData, password: undefined, __v: undefined, _id: undefined }
   }
 
+  async toggleUserBot(email: string) {
+    const user = await this.userModel.findOneAndUpdate(
+      { email },
+      [
+        {
+          $set: {
+            ActivateBot: { $not: "$ActivateBot" }
+          }
+        }
+      ],
+      {
+        new: true,
+        updatePipeline: true, // ⭐ REQUIRED for pipeline updates
+        projection: { password: 0, __v: 0, _id: 0 }
+      }
+    )
+
+    if (!user) throw new NotFoundException('User not found')
+
+    return user
+  }
+
+
+
   private async useUserBalance(email: string, amount: number, action: 'minus' | 'add') {
     const existingUser = await this.userModel.findOne({ email });
     if (!existingUser) {

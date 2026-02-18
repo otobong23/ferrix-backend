@@ -234,6 +234,7 @@ export class TransactionService {
     if (existingUser.ActivateBot) {
       existingUser.balance += amount;
       existingUser.totalYield += amount;
+      existingUser.twentyFourHourTimerStart = ''
       // await this.crewService.awardReferralBonus(existingUser.userID, amount, "mining_profit")
       const newTransaction = new this.transactionModel({ email, type: 'yield', amount, status: 'completed', date: new Date() })
       await newTransaction.save()
