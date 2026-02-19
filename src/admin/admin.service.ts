@@ -244,6 +244,7 @@ export class AdminService {
     } else if (type === 'withdrawal') {
       admin.totalWithdraw += amount;
     }
+    admin.totalTransactions += 1;
 
     await admin.save();
   }
