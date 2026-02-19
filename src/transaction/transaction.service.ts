@@ -229,21 +229,54 @@ export class TransactionService {
   }
 
   async mine(email: string, amount: number) {
-    const existingUser = await this.findUserByEmail(email);
-    if (!existingUser) throw new NotFoundException('User not Found, please signup');
-    if (existingUser.ActivateBot) {
-      existingUser.balance += amount;
-      existingUser.totalYield += amount;
-      existingUser.twentyFourHourTimerStart = ''
-      // await this.crewService.awardReferralBonus(existingUser.userID, amount, "mining_profit")
-      const newTransaction = new this.transactionModel({ email, type: 'yield', amount, status: 'completed', date: new Date() })
-      await newTransaction.save()
-      await existingUser.save();
-      return existingUser.balance;
-    } else {
-      throw new ConflictException('Your account has been suspended. Please Vist Customer Care')
+    const now = Date.now();
+    const duration = 24 * 60 * 60 * 1000;
+    // const duration = 1 * 1 * 60 * 1000 //1 minutes
+
+
+    const user = await this.userModel.findOneAndUpdate(
+      {
+        email,
+        ActivateBot: true,
+        twentyFourHourTimerStart: { $ne: '' },
+        $expr: {
+          $lte: [
+            { $add: [{ $toLong: "$twentyFourHourTimerStart" }, duration] },
+            now,
+          ],
+        },
+      },
+      {
+        $inc: {
+          balance: amount,
+          totalYield: amount,
+        },
+        $set: {
+          twentyFourHourTimerStart: '',
+        },
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      throw new BadRequestException(
+        'Yield already claimed or timer not finished'
+      );
     }
+
+    const newTransaction = new this.transactionModel({
+      email,
+      type: 'yield',
+      amount,
+      status: 'completed',
+      date: new Date(),
+    });
+
+    await newTransaction.save();
+
+    return user.balance;
   }
+
 
   async getPlan(email: string, amount: number, plan: string) {
     const existingUser = await this.findUserByEmail(email);
