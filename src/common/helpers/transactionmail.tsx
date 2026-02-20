@@ -169,14 +169,14 @@ const TransactionMail: React.FC<EmailTemplateProps> = ({
   coin = "USDT",
   timestamp = new Date().toLocaleString()
 }) => {
-  const review = 'https://www.novox.app/admin/transactions'
-  const dashboard = 'https://www.novox.app/admin/dashboard'
+  const review = 'https://www.ferrix.app/admin/transactions'
+  const dashboard = 'https://www.ferrix.app/admin/dashboard'
   return (
     <div style={styles.body}>
       <div style={styles.container}>
         {/* Header */}
         <div style={styles.header}>
-          <div style={styles.logo}>Novox</div>
+          <div style={styles.logo}>FERRIX</div>
           <div style={styles.tagline}>Verified Trading Platform</div>
         </div>
 
@@ -250,7 +250,7 @@ const TransactionMail: React.FC<EmailTemplateProps> = ({
         {/* Footer */}
         <div style={styles.footer}>
           <p style={styles.footerText}>
-            <strong>Novox Trading Platform</strong>
+            <strong>Ferrix Trading Platform</strong>
           </p>
           <p style={styles.footerText}>
             Modern P2P Bitcoin & Cryptocurrency Exchange

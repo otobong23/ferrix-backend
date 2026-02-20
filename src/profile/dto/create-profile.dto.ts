@@ -2,6 +2,7 @@ import {
   IsBoolean,
   IsDate,
   IsEnum,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -135,4 +136,19 @@ export class CreateTierDto {
   @IsOptional()
   @IsDate()
   joinDate?: Date;
+}
+
+
+export class supportMailDTO {
+  @IsString()
+  @IsNotEmpty()
+  email: string
+
+  @IsString()
+  @IsNotEmpty()
+  name: string
+
+  @IsString()
+  @IsNotEmpty()
+  message: string
 }

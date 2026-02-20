@@ -15,7 +15,7 @@ export class UserTransaction {
   @Prop({ type: String, ref: 'user', required: true })
   email: string;
 
-  @Prop({ required: true, enum: ['deposit', 'withdrawal', 'tier', 'bonus', 'yield'] })
+  @Prop({ required: true, enum: ['deposit', 'withdrawal', 'tier', 'bonus', 'yield', 'check-in'] })
   type: string;
 
   @Prop({ type: String })

@@ -5,6 +5,7 @@ import EmailTemplate from './mail'
 import { config } from 'dotenv'
 import TransactionMail from './transactionmail';
 import TransactionStatusEmail from './TransactionStatusEmail';
+import HelpMessageMail from './helpMessage';
 config()
 
 
@@ -32,7 +33,7 @@ export default async function sendResetMail(to: string, username: string, code: 
    const mailOptions = {
       from,
       to,
-      subject: 'Novox: Reset Code',
+      subject: 'FERRIX: Reset Code',
       html: htmlContent,
    };
 
@@ -49,7 +50,7 @@ export async function sendMail(to: string, email: string, amount: number, transa
    const mailOptions = {
       from,
       to,
-      subject: 'NOVOX: Incoming Transaction Request',
+      subject: 'FERRIX: Incoming Transaction Request',
       html: htmlContent,
    };
 
@@ -66,8 +67,27 @@ export async function sendTransactionStatus(to: string, email: string, amount: n
    const mailOptions = {
       from,
       to,
-      subject: 'NOVOX: Incoming Transaction Request',
+      subject: 'FERRIX: Incoming Transaction Request',
       html: htmlContent,
+   };
+
+   const sendMail = await transport.sendMail(mailOptions);
+   return sendMail.accepted[0] === to
+}
+
+
+export async function sendHelpMail(email: string, name: string, message: string) {
+   const to = process.env.EMAIL_USER;
+   // const htmlContent = renderToStaticMarkup(
+   //    createElement(HelpMessageMail, { email, name, message })
+   // );
+
+   const mailOptions = {
+      from: to,
+      to,
+      subject: 'FERRIX: Incoming Support Request',
+      // html: htmlContent,
+      react: HelpMessageMail({ email, name, message })
    };
 
    const sendMail = await transport.sendMail(mailOptions);

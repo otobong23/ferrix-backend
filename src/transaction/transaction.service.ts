@@ -331,7 +331,7 @@ export class TransactionService {
       try {
         existingUser.balance += amount;
         existingUser.spinWheelTimerStart = Date.now();
-        const newTransaction = new this.transactionModel({ email, type: 'bonus', amount, status: 'completed', date: new Date() })
+        const newTransaction = new this.transactionModel({ email, type: 'check-in', amount, status: 'completed', date: new Date() })
         await newTransaction.save()
         await existingUser.save();
         return existingUser.balance;
@@ -340,5 +340,34 @@ export class TransactionService {
         throw new InternalServerErrorException('An error occurred while processing your spin reward. please try again later. Error: ' + err.message)
       }
     }
+  }
+
+  async getCheckInTransactions(email: string, limit: number = 50, page: number = 1) {
+    limit = Math.max(1, Math.min(limit, 100))
+    page = Math.max(1, page)
+    const offset = (page - 1) * limit;
+
+    const user = await this.findUserByEmail(email);
+
+    const transactions = await this.transactionModel
+      .find({ email, type: 'check-in' })
+      .sort({ date: -1 })
+      .limit(limit)
+      .skip(offset)
+      .exec();
+
+    const total = await this.transactionModel.countDocuments({ email })
+    const totalPages = total === 0 ? 1 : Math.ceil(total / limit);
+
+    return {
+      transactions,
+      page,
+      total,
+      totalPages,
+      user: {
+        email: user.email,
+        balance: user.balance,
+      },
+    };
   }
 }

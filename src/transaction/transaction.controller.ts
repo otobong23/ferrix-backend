@@ -61,4 +61,14 @@ export class TransactionController {
     const email = req.user.email;
     return this.transactionService.spinReward(email, 0.01)
   }
+
+  @Get('check-in-transaction')
+  async getCheckInTransactions(
+    @Req() req,
+    @Query('limit', ParseIntPipe) limit = 50,
+    @Query('page', ParseIntPipe) page = 1
+  ) {
+    const email = req.user.email
+    return this.transactionService.getCheckInTransactions(email, limit, page)
+  }
 }

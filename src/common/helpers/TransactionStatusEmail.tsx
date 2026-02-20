@@ -251,9 +251,9 @@ const TransactionStatusEmail: React.FC<TransactionStatusEmailProps> = ({
   reason,
   processingTime = "5-10 minutes"
 }) => {
-  const dashboard = 'https://www.novox.app/dashboard';
-  const transactions = 'https://www.novox.app/dashboard/tiering/transactions';
-  const support = 'https://www.novox.app/dashboard/support';
+  const dashboard = 'https://www.ferrix.app/dashboard';
+  const transactions = 'https://www.ferrix.app/profile/transactions';
+  const support = 'https://www.ferrix.app/dashboard/help-center';
 
   const isApproved = status === 'approved';
   const isDeclined = status === 'declined';
@@ -263,7 +263,7 @@ const TransactionStatusEmail: React.FC<TransactionStatusEmailProps> = ({
       <div style={styles.container}>
         {/* Header */}
         <div style={styles.header}>
-          <div style={styles.logo}>Novox</div>
+          <div style={styles.logo}>Ferrix</div>
           <div style={styles.tagline}>Peer-to-Peer Trading Platform</div>
         </div>
 
@@ -396,7 +396,7 @@ const TransactionStatusEmail: React.FC<TransactionStatusEmailProps> = ({
 
           <p style={{ fontSize: '0.9rem', color: '#718096', textAlign: 'center', marginTop: '20px' }}>
             {isApproved 
-              ? 'Thank you for using Novox. We appreciate your business!'
+              ? 'Thank you for using Ferrix. We appreciate your business!'
               : 'We apologize for any inconvenience. Please don\'t hesitate to reach out if you have questions.'
             }
           </p>
@@ -405,7 +405,7 @@ const TransactionStatusEmail: React.FC<TransactionStatusEmailProps> = ({
         {/* Footer */}
         <div style={styles.footer}>
           <p style={styles.footerText}>
-            <strong>Novox Trading Platform</strong>
+            <strong>Ferrix Trading Platform</strong>
           </p>
           <p style={styles.footerText}>
             Modern P2P Bitcoin & Cryptocurrency Exchange
