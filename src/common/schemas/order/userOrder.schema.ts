@@ -5,7 +5,7 @@ export type UserOrderDocument = UserOrder & Document;
 
 @Schema({ timestamps: true })
 export class UserOrder {
-  @Prop({ type: String })
+  @Prop({ type: String, required: true })
   invoiceId: string;
 
   @Prop({ type: String, ref: 'user', required: true })
@@ -22,6 +22,12 @@ export class UserOrder {
 
   @Prop({ type: String })
   address: string;
+
+  @Prop({ type: String })
+   ipn_callback_url: string;
+
+  @Prop({ type: String })
+  invoice_url: string;
 
   @Prop({ type: String })
   referenceID: string;

@@ -59,7 +59,7 @@ export class TransactionService {
           pay_currency: "usdttrc20",
           order_id: crypto.randomUUID(),
           order_description: "User deposit",
-          ipn_callback_url: `${process.env.BACKEND_URL}/payments/webhook`
+          ipn_callback_url: `${process.env.BACKEND_URL}/payments/webhooks/nowpayments`
         },
         {
           headers: {
@@ -75,7 +75,9 @@ export class TransactionService {
       const newUserOrder = new this.userOrderModel({
         email,
         address: invoice.pay_address,
-        displayAmount: invoice.pay_amount || amount,
+        displayAmount: invoice.price_amount || amount,
+        invoice_url: invoice.invoice_url,
+        ipn_callback_url: invoice.ipn_callback_url,
         invoiceId: invoice.id,
         status: "pending",
         expiresAt: new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000),
