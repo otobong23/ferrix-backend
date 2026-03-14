@@ -36,73 +36,60 @@ export class TransactionService {
     return user;
   }
 
-  private readonly apiUrl = 'https://www.blockonomics.co/api';
+  private readonly apiUrl = 'https://api.nowpayments.io/v1';
+
   async generatePaymentAddress(amount: number, email: string): Promise<{ message: string, order: UserOrderDocument }> {
+
     const existingUser = await this.userModel.findOne({ email });
-    if (!existingUser) throw new NotFoundException('User not found. Please sign up.');
+    if (!existingUser) throw new NotFoundException('User not found');
 
-    if (existingUser.ActivateBot) {
-      try {
-        const response = await axios.post(
-          `${this.apiUrl}/new_address?crypto=USDT`, {},
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.BLOCKONOMICS_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        );
+    if (!existingUser.ActivateBot) {
+      throw new NotFoundException('Your account has been suspended');
+    }
 
-        const USDT_DECIMALS = 1_000_000;
-        const DISPLAY_DECIMALS = 1_000; // 3 decimal places
+    try {
 
-        const toAtomic = (v: number) => Math.round(v * USDT_DECIMALS);
-        const toDisplay = (atomic: number) =>
-          Number((atomic / USDT_DECIMALS).toFixed(3));
+      const normalizedAmount = Number(amount.toFixed(3));
 
-        const normalizedAmount = Number(amount.toFixed(3));
-        const baseAtomic = toAtomic(normalizedAmount);
-
-
-        // 100–999 × 0.001 USDT = 0.100–0.999 USDT ✅ (3 decimals)
-        const offsetAtomic = Math.floor(Math.random() * 900 + 100) * DISPLAY_DECIMALS;
-
-        let payableAtomic = baseAtomic + offsetAtomic;
-
-        let retries = 3;
-        while (retries > 0) {
-          const exists = await this.userOrderModel.findOne({
-            atomicAmount: payableAtomic,
-            status: 'pending',
-          });
-
-          if (!exists) break;
-
-          payableAtomic = baseAtomic + (Math.floor(Math.random() * 900 + 100) * DISPLAY_DECIMALS);
-          retries--;
+      const response = await axios.post(
+        `${this.apiUrl}/invoice`,
+        {
+          price_amount: normalizedAmount,
+          price_currency: "usd", // or usdt if you prefer
+          pay_currency: "usdttrc20",
+          order_id: crypto.randomUUID(),
+          order_description: "User deposit",
+          ipn_callback_url: `${process.env.BACKEND_URL}/payments/webhook`
+        },
+        {
+          headers: {
+            "x-api-key": process.env.NOWPAYMENTS_API_KEY,
+            "Content-Type": "application/json"
+          }
         }
+      );
 
-        const newUserOrder = new this.userOrderModel({
-          address: response.data.address,
-          atomicAmount: payableAtomic,
-          displayAmount: toDisplay(payableAtomic),
-          email,
-          expiresAt: new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000),
-        });
+      const invoice = response.data;
 
-        await newUserOrder.save();
+      const newUserOrder = new this.userOrderModel({
+        email,
+        address: invoice.pay_address,
+        displayAmount: invoice.pay_amount,
+        invoiceId: invoice.id,
+        status: "pending",
+        expiresAt: new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000),
+      });
 
-        return { message: 'Payment address generated successfully', order: newUserOrder };
-      } catch (err) {
-        console.error('Request Address error:', err);
-        const message =
-          err instanceof AxiosError
-            ? err.response?.data?.message || 'Unexpected API error'
-            : err instanceof Error ? err.message : 'An unexpected error occurred';
-        throw new InternalServerErrorException(`Failed to generate payment address: ${message}`);
-      }
-    } else {
-      throw new NotFoundException('Your account has been suspended. Please Vist Customer Care')
+      await newUserOrder.save();
+
+      return {
+        message: "Payment address generated successfully",
+        order: newUserOrder
+      };
+
+    } catch (err) {
+      console.error("NOWPayments error:", err?.response?.data || err);
+      throw new InternalServerErrorException("Failed to create payment invoice");
     }
   }
 

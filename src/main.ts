@@ -12,6 +12,13 @@ async function bootstrap() {
 
   app.use(bodyParser.json({ limit: '10mb' }));      // for JSON bodies
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+  app.use(
+    bodyParser.json({
+      verify: (req: any, res, buf) => {
+        req.rawBody = buf.toString();
+      },
+    }),
+  );
 
   app.enableCors({
     origin: ['http://localhost:3000', 'https://ferrix.app', 'https://www.ferrix.app'], // allow requests from your frontend

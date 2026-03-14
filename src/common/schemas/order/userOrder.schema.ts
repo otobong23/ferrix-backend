@@ -6,7 +6,7 @@ export type UserOrderDocument = UserOrder & Document;
 @Schema({ timestamps: true })
 export class UserOrder {
   @Prop({ type: String })
-  txid: string;
+  invoiceId: string;
 
   @Prop({ type: String, ref: 'user', required: true })
   email: string;
@@ -14,7 +14,7 @@ export class UserOrder {
   @Prop({ type: Number, required: true })
   displayAmount: number;
 
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number })
   atomicAmount: number;
 
   @Prop({ default: 'pending', enum: ['pending', 'completed', 'failed'] })
