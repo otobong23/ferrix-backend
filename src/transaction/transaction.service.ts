@@ -112,9 +112,9 @@ export class TransactionService {
   }
 
   async createDepositTransaction(orderID: string, email: string, txhash: string) {
-    // if (!this.isValidTxHash(txhash)) {
-    //   throw new BadRequestException("Invalid transaction hash");
-    // }
+    if (!this.isValidTxHash(txhash)) {
+      throw new BadRequestException("Invalid transaction hash");
+    }
     const existingUser = await this.userModel.findOne({ email });
     if (!existingUser) throw new NotFoundException('User not found. Please sign up.');
     const order = await this.userOrderModel.findById(orderID);
@@ -124,7 +124,6 @@ export class TransactionService {
     if (order.referenceID) return { message: 'This order has already been processed', success: false };
     // 1. Notify Blockonomics API
     try {
-      // 1. Notify Blockonomics API
       const res = await axios.post(this.apiMonitorUrl,
         { txid: txhash, testnet: 0 },
         { headers: { 'Authorization': `Bearer ${process.env.BLOCKONOMICS_API_KEY}` } }
