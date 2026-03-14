@@ -36,12 +36,7 @@ export class TransactionService {
     return user;
   }
 
-  private isValidTxHash(hash: string) {
-    return /^[a-fA-F0-9]{64}$/.test(hash);
-  }
-
   private readonly apiUrl = 'https://www.blockonomics.co/api';
-  private readonly apiMonitorUrl = 'https://www.blockonomics.co/api/monitor_tx';
   async generatePaymentAddress(amount: number, email: string): Promise<{ message: string, order: UserOrderDocument }> {
     const existingUser = await this.userModel.findOne({ email });
     if (!existingUser) throw new NotFoundException('User not found. Please sign up.');
@@ -111,10 +106,7 @@ export class TransactionService {
     }
   }
 
-  async createDepositTransaction(orderID: string, email: string, txhash: string) {
-    if (!this.isValidTxHash(txhash)) {
-      throw new BadRequestException("Invalid transaction hash");
-    }
+  async createDepositTransaction(orderID: string, email: string) {
     const existingUser = await this.userModel.findOne({ email });
     if (!existingUser) throw new NotFoundException('User not found. Please sign up.');
     const order = await this.userOrderModel.findById(orderID);
@@ -122,27 +114,7 @@ export class TransactionService {
     if (order.email !== email) throw new ForbiddenException('You are not authorized to confirm this deposit');
     if (order.status !== 'pending') throw new BadRequestException('This order has already been processed');
     if (order.referenceID) return { message: 'This order has already been processed', success: false };
-    // 1. Notify Blockonomics API
-    try {
-      const res = await axios.post(this.apiMonitorUrl,
-        { txid: txhash, testnet: 0 },
-        { headers: { 'Authorization': `Bearer ${process.env.BLOCKONOMICS_API_KEY}` } }
-      );
-      console.log(res.data)
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        console.error("Blockonomics error:", err.response?.data);
-      } else {
-        console.error(err);
-      }
-      const message =
-        err instanceof AxiosError
-          ? err.response?.data?.message || 'Unexpected API error'
-          : err instanceof Error ? err.message : 'An unexpected error occurred';
-      throw new InternalServerErrorException(`Failed to register monitoring: ${message}`);
-    }
-    order.txhash = txhash;
-    const newTransaction = new this.transactionModel({ orderID, email, type: 'deposit', amount: order.displayAmount, txhash, status: 'pending', date: new Date() }) as UserTransactionDocument & { _id: any };
+    const newTransaction = new this.transactionModel({ orderID, email, type: 'deposit', amount: order.displayAmount, status: 'pending', date: new Date() }) as UserTransactionDocument & { _id: any };
     await newTransaction.save();
 
     order.referenceID = newTransaction._id.toString();
