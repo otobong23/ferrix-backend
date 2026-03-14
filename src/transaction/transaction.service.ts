@@ -112,9 +112,9 @@ export class TransactionService {
   }
 
   async createDepositTransaction(orderID: string, email: string, txhash: string) {
-    if (!this.isValidTxHash(txhash)) {
-      throw new BadRequestException("Invalid transaction hash");
-    }
+    // if (!this.isValidTxHash(txhash)) {
+    //   throw new BadRequestException("Invalid transaction hash");
+    // }
     const existingUser = await this.userModel.findOne({ email });
     if (!existingUser) throw new NotFoundException('User not found. Please sign up.');
     const order = await this.userOrderModel.findById(orderID);
