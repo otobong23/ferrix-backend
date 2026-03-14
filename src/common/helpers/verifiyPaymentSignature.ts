@@ -4,7 +4,7 @@ config()
 
 export function verifyNowPaymentsSignature(rawBody: string, signature: string) {
 
-   const secret = process.env.NOWPYMENT_IPN_SECRET_KEY!;
+   const secret = process.env.NOWPAYMENTS_IPN_SECRET_KEY!;
 
    const hmac = crypto
       .createHmac("sha512", secret)

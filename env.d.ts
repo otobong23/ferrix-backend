@@ -17,6 +17,10 @@ declare namespace NodeJS {
     BLOCKONOMICS_API_KEY: string;
     BLOCKONOMICS_CALLBACK_SECRET: string;
 
+    NOWPAYMENTS_API_KEY: string;
+    NOWPAYMENTS_IPN_SECRET_KEY: string;
+    BACKEND_URL: string;
+
     NODE_ENV: "development" | "production" | "test";
   }
 }
