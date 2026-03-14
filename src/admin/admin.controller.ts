@@ -180,7 +180,7 @@ export class BlockonomicsController {
     } = body;
 
     // 3️⃣ Ignore unconfirmed payments
-    if (status !== 2) {
+    if (parseInt(String(status)) !== 2) {
       this.logger.warn('Order is unconfirmed, ignoring');
       return { ok: true };
     }

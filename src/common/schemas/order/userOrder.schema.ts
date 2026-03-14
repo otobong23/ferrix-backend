@@ -7,6 +7,9 @@ export type UserOrderDocument = UserOrder & Document;
 export class UserOrder {
   @Prop({ type: String })
   txid: string;
+  
+  @Prop({ type: String })
+  txhash: string;
 
   @Prop({ type: String, ref: 'user', required: true })
   email: string;

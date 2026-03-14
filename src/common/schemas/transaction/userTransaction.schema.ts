@@ -36,6 +36,9 @@ export class UserTransaction {
   @Prop({ type: String })
   orderID: string;
 
+  @Prop({ type: String })
+  txhash: string;
+
   @Prop({ default: 'USDT' })
   Coin: string; // e.g. 'USDT', 'BTC'
 

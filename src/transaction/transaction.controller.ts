@@ -18,11 +18,11 @@ export class TransactionController {
   }
 
   @Post('create-deposit-transaction')
-  async createDepositTransaction(@Body() body: { orderID: string }, @Req() req) {
+  async createDepositTransaction(@Body() body: { orderID: string, txhash: string }, @Req() req) {
     const email = req.user.email;
-    const { orderID } = body;
+    const { orderID, txhash } = body;
     if (!orderID) throw new ForbiddenException('orderID is required');
-    return await this.transactionService.createDepositTransaction(orderID, email);
+    return await this.transactionService.createDepositTransaction(orderID, email, txhash );
   }
 
   @Post('withdraw')
