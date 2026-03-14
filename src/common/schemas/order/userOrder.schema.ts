@@ -43,7 +43,7 @@ UserOrderSchema.index(
   { expireAfterSeconds: 0 }
 );
 
-UserOrderSchema.index(
-  { atomicAmount: 1, status: 1 },
-  { unique: true, partialFilterExpression: { status: 'pending' } }
-);
+// UserOrderSchema.index(
+//   { atomicAmount: 1, status: 1 },
+//   { unique: true, partialFilterExpression: { status: 'pending' } }
+// );
