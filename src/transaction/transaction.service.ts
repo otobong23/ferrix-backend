@@ -36,6 +36,10 @@ export class TransactionService {
     return user;
   }
 
+  private isValidTxHash(hash: string) {
+    return /^[a-fA-F0-9]{64}$/.test(hash);
+  }
+
   private readonly apiUrl = 'https://www.blockonomics.co/api';
   private readonly apiMonitorUrl = 'https://www.blockonomics.co/api/monitor_tx';
   async generatePaymentAddress(amount: number, email: string): Promise<{ message: string, order: UserOrderDocument }> {
@@ -108,6 +112,9 @@ export class TransactionService {
   }
 
   async createDepositTransaction(orderID: string, email: string, txhash: string) {
+    if (!this.isValidTxHash(txhash)) {
+      throw new BadRequestException("Invalid transaction hash");
+    }
     const existingUser = await this.userModel.findOne({ email });
     if (!existingUser) throw new NotFoundException('User not found. Please sign up.');
     const order = await this.userOrderModel.findById(orderID);
@@ -124,7 +131,11 @@ export class TransactionService {
       );
       console.log(res.data)
     } catch (err) {
-      console.error('Failed to register monitoring:', err);
+      if (axios.isAxiosError(err)) {
+        console.error("Blockonomics error:", err.response?.data);
+      } else {
+        console.error(err);
+      }
       const message =
         err instanceof AxiosError
           ? err.response?.data?.message || 'Unexpected API error'
