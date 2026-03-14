@@ -74,7 +74,7 @@ export class TransactionService {
       const newUserOrder = new this.userOrderModel({
         email,
         address: invoice.pay_address,
-        displayAmount: invoice.pay_amount,
+        displayAmount: invoice.pay_amount || amount,
         invoiceId: invoice.id,
         status: "pending",
         expiresAt: new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000),
