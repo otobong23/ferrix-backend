@@ -118,10 +118,11 @@ export class TransactionService {
     // 1. Notify Blockonomics API
     try {
       // 1. Notify Blockonomics API
-      await axios.post(this.apiMonitorUrl,
+      const res = await axios.post(this.apiMonitorUrl,
         { txid: txhash, testnet: 0 },
         { headers: { 'Authorization': `Bearer ${process.env.BLOCKONOMICS_API_KEY}` } }
       );
+      console.log(res.data)
     } catch (err) {
       console.error('Failed to register monitoring:', err);
       const message =
