@@ -70,6 +70,7 @@ export class TransactionService {
       );
 
       const invoice = response.data;
+      console.log(invoice)
 
       const newUserOrder = new this.userOrderModel({
         email,
