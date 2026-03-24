@@ -76,12 +76,13 @@ export class TransactionService {
       const newUserOrder = new this.userOrderModel({
         email,
         address: invoice.pay_address,
-        displayAmount: invoice.price_amount || amount,
+        displayAmount: invoice.pay_amount || amount,
         invoice_url: invoice.invoice_url,
         ipn_callback_url: invoice.ipn_callback_url,
-        invoiceId: invoice.id,
+        invoiceId: invoice.id || invoice.order_id,
+        paymentID: invoice.payment_id,
         status: "pending",
-        expiresAt: new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000),
+        expiresAt: new Date(invoice.expiration_estimate_date) || new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000),
       });
 
       await newUserOrder.save();
