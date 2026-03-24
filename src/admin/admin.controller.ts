@@ -233,6 +233,7 @@ export class NowPaymentsController {
     return this.adminService.ReviewTransaction({
       order_id: body.order_id,
       pay_amount: body.pay_amount,
+      amount_received: body.amount_received,
       pay_address: body.pay_address,
       payment_status: body.payment_status
     });

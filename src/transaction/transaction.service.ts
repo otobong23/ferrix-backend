@@ -76,7 +76,8 @@ export class TransactionService {
       const newUserOrder = new this.userOrderModel({
         email,
         address: invoice.pay_address,
-        displayAmount: invoice.pay_amount || amount,
+        displayAmount: invoice.pay_amount,
+        expectedAmount: invoice.price_amount || amount,
         invoice_url: invoice.invoice_url,
         ipn_callback_url: invoice.ipn_callback_url,
         invoiceId: invoice.id || invoice.order_id,

@@ -250,125 +250,131 @@ export class AdminService {
   }
 
   async ReviewTransaction({
-  order_id,
-  pay_amount,
-  pay_address,
-  payment_status
-}: {
-  order_id: string;
-  pay_amount: number;
-  pay_address: string;
-  payment_status: string;
-}) {
+    order_id,
+    pay_amount,
+    amount_received,
+    pay_address,
+    payment_status
+  }: {
+    order_id: string;
+    pay_amount: number;
+    amount_received: number;
+    pay_address: string;
+    payment_status: string;
+  }) {
 
-  // Only process completed payments
-  if (payment_status !== "finished") {
-    this.logger.warn("Payment not completed yet");
-    return { ok: false };
-  }
+    // Only process completed payments
+    if (payment_status !== "finished") {
+      this.logger.warn("Payment not completed yet");
+      return { ok: false };
+    }
 
-  // 1️⃣ Find order by invoiceId
-  const order = await this.userOrderModel.findOne({
-    invoiceId: order_id,
-    status: "pending",
-    expiresAt: { $gt: new Date() }
-  });
-
-  if (!order) {
-    this.logger.warn(`Order not found for invoice ${order_id}`);
-    return { ok: false };
-  }
-
-  const existingUser = await this.userModel.findOne({ email: order.email });
-
-  if (!existingUser) {
-    this.logger.warn("User not found for order");
-    return { ok: false };
-  }
-
-  // 2️⃣ Prevent double processing (IDEMPOTENCY)
-  if (order.status === "completed") {
-    this.logger.warn("Order already processed");
-    return { ok: false };
-  }
-
-  const usdt = Number(pay_amount);
-
-  // 3️⃣ Security check (amount match)
-  if (usdt < order.displayAmount) {
-    this.logger.warn("Payment amount lower than expected");
-    return { ok: false };
-  }
-
-  // 4️⃣ Referral bonus
-  if (existingUser.oneTimeBonus) {
-    await this.crewService.awardReferralBonus(
-      existingUser.userID,
-      usdt,
-      "first_deposit"
-    );
-
-    existingUser.oneTimeBonus = false;
-    await existingUser.save();
-  }
-
-  // 5️⃣ Update admin stats
-  await this.updateAdminTotals("deposit", usdt);
-
-  let transaction;
-
-  if (order.referenceID) {
-    transaction = await this.transactionModel.findById(order.referenceID);
-  }
-
-  // 6️⃣ Create or update transaction
-  if (!transaction) {
-
-    transaction = await this.transactionModel.create({
-      email: order.email,
-      type: "deposit",
-      amount: usdt,
-      status: "completed",
-      date: new Date(),
+    // 1️⃣ Find order by invoiceId
+    const order = await this.userOrderModel.findOne({
+      invoiceId: order_id,
+      status: "pending",
+      expiresAt: { $gt: new Date() }
     });
 
-    order.referenceID = transaction._id.toString();
+    if (!order) {
+      this.logger.warn(`Order not found for invoice ${order_id}`);
+      return { ok: false };
+    }
 
-  } else {
-    transaction.status = "completed";
+    const existingUser = await this.userModel.findOne({ email: order.email });
 
-    await transaction.save();
+    if (!existingUser) {
+      this.logger.warn("User not found for order");
+      return { ok: false };
+    }
+
+    // 2️⃣ Prevent double processing (IDEMPOTENCY)
+    if (order.status === "completed") {
+      this.logger.warn("Order already processed");
+      return { ok: false };
+    }
+
+    const usdt = Number(amount_received);
+
+    // 3️⃣ Security check (amount match)
+    const received = Number(amount_received);
+    const expected = Number(order.displayAmount);
+    const tolerance = 0.1;
+
+    if (received + tolerance < expected) {
+      this.logger.warn("Underpaid transaction");
+      return { ok: false };
+    }
+
+    // 4️⃣ Referral bonus
+    if (existingUser.oneTimeBonus) {
+      await this.crewService.awardReferralBonus(
+        existingUser.userID,
+        usdt,
+        "first_deposit"
+      );
+
+      existingUser.oneTimeBonus = false;
+      await existingUser.save();
+    }
+
+    // 5️⃣ Update admin stats
+    await this.updateAdminTotals("deposit", usdt);
+
+    let transaction;
+
+    if (order.referenceID) {
+      transaction = await this.transactionModel.findById(order.referenceID);
+    }
+
+    // 6️⃣ Create or update transaction
+    if (!transaction) {
+
+      transaction = await this.transactionModel.create({
+        email: order.email,
+        type: "deposit",
+        amount: usdt,
+        status: "completed",
+        date: new Date(),
+      });
+
+      order.referenceID = transaction._id.toString();
+
+    } else {
+      transaction.status = "completed";
+
+      await transaction.save();
+    }
+
+    // 7️⃣ Mark order completed
+    order.status = "completed";
+    await order.save();
+
+    this.logger.log(`Payment confirmed for ${pay_address}`);
+
+    // 8️⃣ Notify user
+    await sendMail(
+      to,
+      existingUser.email,
+      usdt,
+      transaction._id.toString(),
+      "deposit"
+    );
+
+    await this.crewService.updateCrewOnTransaction(
+      existingUser.userID,
+      "deposit",
+      usdt
+    );
+
+    this.logger.log({
+      success: true,
+      message: "Transaction Processed Successfully",
+      transaction
+    });
+
+    return { ok: true };
   }
-
-  // 7️⃣ Mark order completed
-  order.status = "completed";
-  await order.save();
-
-  this.logger.log(`Payment confirmed for ${pay_address}`);
-
-  // 8️⃣ Notify user
-  await sendMail(
-    to,
-    existingUser.email,
-    usdt,
-    transaction._id.toString(),
-    "deposit"
-  );
-
-  await this.crewService.updateCrewOnTransaction(
-    existingUser.userID,
-    "deposit",
-    usdt
-  );
-
-  this.logger.log({
-    success: true,
-    message: "Transaction Processed Successfully",
-    transaction
-  });
-
-  return { ok: true };
-}
 
   async updateTransaction(email: string, transactionID: string, updateData: UpdateTransactionDto) {
     const transaction = await this.transactionModel.findOne({ email, _id: transactionID });

@@ -17,6 +17,9 @@ export class UserOrder {
   @Prop({ type: Number, required: true })
   displayAmount: number;
 
+  @Prop({ type: Number })
+  expectedAmount: number;
+
   @Prop({ default: 'pending', enum: ['pending', 'completed', 'failed'] })
   status: 'pending' | 'completed' | 'failed';
 
