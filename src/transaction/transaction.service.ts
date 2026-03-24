@@ -53,7 +53,7 @@ export class TransactionService {
 
       const response = await axios.post(
         // `${this.apiUrl}/invoice`,
-        `${this.apiUrl}/v1/payment`,
+        `${this.apiUrl}/payment`,
         {
           price_amount: normalizedAmount,
           price_currency: "usd", // or usdt if you prefer
