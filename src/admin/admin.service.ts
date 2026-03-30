@@ -16,6 +16,7 @@ import { sendMail, sendTransactionStatus } from 'src/common/helpers/mailer';
 import { UpdateProfileDto } from 'src/profile/dto/update-profile.dto';
 import { CrewExtraService } from 'src/crew/crewExtra.service';
 import { UserOrder, UserOrderDocument } from 'src/common/schemas/order/userOrder.schema';
+import { inspect } from 'util';
 
 const to = process.env.EMAIL_USER
 
@@ -260,6 +261,11 @@ export class AdminService {
       pay_address,
       payment_status,
     } = payload;
+
+
+    this.logger.log(
+      `Received webhook: ${inspect(payload, { depth: null, colors: true })}`
+    );
 
     // Only process completed payments
     if (payment_status !== "finished") {
