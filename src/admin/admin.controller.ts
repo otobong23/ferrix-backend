@@ -221,22 +221,15 @@ export class NowPaymentsController {
   ) {
 
     const rawBody = req.rawBody;
-    console.log("Received NowPayments webhook: ", { rawBody, signature });
 
     const isValid = verifyNowPaymentsSignature(rawBody, signature);
     if (!isValid) {
       throw new ForbiddenException("Invalid webhook signature");
     }
 
-    const body = JSON.parse(rawBody);
+    const body = JSON.parse(rawBody) as NowPaymentsWebhookPayload;
     if (body.pay_currency !== "usdttrc20") return;
 
-    return this.adminService.ReviewTransaction({
-      order_id: body.order_id,
-      pay_amount: body.pay_amount,
-      amount_received: body.amount_received,
-      pay_address: body.pay_address,
-      payment_status: body.payment_status
-    });
+    return this.adminService.ReviewTransaction(body);
   }
 }

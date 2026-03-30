@@ -249,23 +249,21 @@ export class AdminService {
     await admin.save();
   }
 
-  async ReviewTransaction({
-    order_id,
-    pay_amount,
-    amount_received,
-    pay_address,
-    payment_status
-  }: {
-    order_id: string;
-    pay_amount: number;
-    amount_received: number;
-    pay_address: string;
-    payment_status: string;
-  }) {
+  async ReviewTransaction(payload: NowPaymentsWebhookPayload) {
+
+    const {
+      order_id,
+      payment_id,
+      pay_amount,
+      actually_paid,   // <-- actual crypto received (replaces amount_received)
+      outcome_amount,  // <-- after fees deducted
+      pay_address,
+      payment_status,
+    } = payload;
 
     // Only process completed payments
     if (payment_status !== "finished") {
-      this.logger.warn("Payment not completed yet");
+      this.logger.warn(`Payment ${payment_id} not completed — status: ${payment_status}`);
       return { ok: false };
     }
 
@@ -282,44 +280,43 @@ export class AdminService {
     }
 
     const existingUser = await this.userModel.findOne({ email: order.email });
-
     if (!existingUser) {
-      this.logger.warn("User not found for order");
+      this.logger.warn(`User not found for order ${order_id}`);
       return { ok: false };
     }
 
     // 2️⃣ Prevent double processing (IDEMPOTENCY)
-    if (order.status === "completed") {
-      this.logger.warn("Order already processed");
-      return { ok: false };
-    }
-
-    const usdt = Number(amount_received);
-
-    // 3️⃣ Security check (amount match)
-    const received = Number(amount_received);
+    // 5️⃣ Amount validation — use actually_paid vs expected displayAmount
+    //    Use outcome_amount (post-fee) for crediting the user
+    const received = Number(actually_paid);
+    const credited = Number(outcome_amount);  // what user actually gets after fees
     const expected = Number(order.displayAmount);
     const tolerance = 0.1;
 
     if (received + tolerance < expected) {
-      this.logger.warn("Underpaid transaction");
+      this.logger.warn(
+        `Underpaid for order ${order_id}. Expected: ${expected}, Got: ${received}`
+      );
       return { ok: false };
     }
+
+    //update user balance
+    await this.useUserBalance(order.email, credited, 'add');
+
 
     // 4️⃣ Referral bonus
     if (existingUser.oneTimeBonus) {
       await this.crewService.awardReferralBonus(
         existingUser.userID,
-        usdt,
+        credited,
         "first_deposit"
       );
-
       existingUser.oneTimeBonus = false;
       await existingUser.save();
     }
 
     // 5️⃣ Update admin stats
-    await this.updateAdminTotals("deposit", usdt);
+    await this.updateAdminTotals("deposit", credited);
 
     let transaction;
 
@@ -333,7 +330,7 @@ export class AdminService {
       transaction = await this.transactionModel.create({
         email: order.email,
         type: "deposit",
-        amount: usdt,
+        amount: credited,
         status: "completed",
         date: new Date(),
       });
@@ -350,13 +347,13 @@ export class AdminService {
     order.status = "completed";
     await order.save();
 
-    this.logger.log(`Payment confirmed for ${pay_address}`);
+    this.logger.log(`Payment ${payment_id} confirmed for address ${pay_address}`);
 
     // 8️⃣ Notify user
     await sendMail(
       to,
       existingUser.email,
-      usdt,
+      credited,
       transaction._id.toString(),
       "deposit"
     );
@@ -364,7 +361,7 @@ export class AdminService {
     await this.crewService.updateCrewOnTransaction(
       existingUser.userID,
       "deposit",
-      usdt
+      credited
     );
 
     this.logger.log({
