@@ -10,13 +10,19 @@ const port = process.env.PORT || 4000;
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.use(bodyParser.json({ limit: '10mb' }));      // for JSON bodies
-  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
   app.use(
     bodyParser.json({
+      limit: '10mb',
       verify: (req: any, res, buf) => {
         req.rawBody = buf.toString();
       },
+    }),
+  );
+
+  app.use(
+    bodyParser.urlencoded({
+      limit: '10mb',
+      extended: true,
     }),
   );
 
