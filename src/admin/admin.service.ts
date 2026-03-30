@@ -255,7 +255,6 @@ export class AdminService {
     const {
       order_id,
       payment_id,
-      pay_amount,
       actually_paid,   // <-- actual crypto received (replaces amount_received)
       outcome_amount,  // <-- after fees deducted
       pay_address,
