@@ -263,11 +263,12 @@ export class AdminService {
 
 
     this.logger.log(
-      `Received webhook: ${inspect(payload, { depth: null, colors: true })}`
+      `Received webhook: `, payload
     );
 
     // Only process completed payments
-    if (payment_status !== "finished") {
+    const validStatuses = ["finished", "partially_paid"];
+    if (!validStatuses.includes(payment_status)) {
       this.logger.warn(`Payment ${payment_id} not completed — status: ${payment_status}`);
       return { ok: false };
     }
