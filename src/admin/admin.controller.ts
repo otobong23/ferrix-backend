@@ -221,6 +221,7 @@ export class NowPaymentsController {
   ) {
 
     const rawBody = req.rawBody;
+    console.log("Received NowPayments webhook: ", { rawBody, signature });
 
     const isValid = verifyNowPaymentsSignature(rawBody, signature);
     if (!isValid) {
