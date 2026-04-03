@@ -100,14 +100,14 @@ export class TransactionService {
     if (!order) throw new NotFoundException('order not found');
     if (order.email !== email) throw new ForbiddenException('You are not authorized to confirm this deposit');
     if (order.status !== 'pending') throw new BadRequestException('This order has already been processed');
-    if (order.referenceID) return { message: 'This order has already been processed', success: false };
+    if (order.referenceID) return { message: 'This order has already been processed', success: false, redirect: true };
     const newTransaction = new this.transactionModel({ orderID, email, type: 'deposit', amount: order.displayAmount, status: 'pending', date: new Date() }) as UserTransactionDocument & { _id: any };
     await newTransaction.save();
 
     order.referenceID = newTransaction._id.toString();
     await order.save();
     const mailSent = await sendMail(to, existingUser.email, Number(order.displayAmount), newTransaction._id.toString(), 'deposit')
-    return { message: 'Deposit request submitted successfully', transaction: newTransaction }
+    return { message: 'Deposit request submitted successfully', transaction: newTransaction, redirect: false }
   }
 
   // async deposit(depositDto: DepositDto, email: string) {
