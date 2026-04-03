@@ -51,43 +51,40 @@ export class TransactionService {
     try {
 
       const fixedAmount = Number(amount);
+      const offset = (Math.floor(Math.random() * 90) + 10) / 100;
+      let price_amount = fixedAmount + offset;
 
       let retries = 3;
+      while (retries > 0) {
+        const exists = await this.userOrderModel.findOne({ displayAmount: price_amount, status: 'pending' });
+        if (!exists) break;
 
-      let createdOrder;
+        price_amount = fixedAmount + ((Math.floor(Math.random() * 90) + 10) / 100);
+        retries--;
+      }
 
       const invoice = {
         pay_address: VARIABLES.DEPOSIT_WALLET_ADDRESS,
         pay_amount: fixedAmount,
         order_id: crypto.randomUUID(),
+        price_amount
       };
 
-      for (let i = 0; i < retries; i++) {
-        try {
-          const offset = Math.floor(Math.random() * 90) + 10;
-          const price_amount = fixedAmount + offset;
+      const newUserOrder = new this.userOrderModel({
+        email,
+        address: invoice.pay_address,
+        displayAmount: invoice.price_amount,  // this is the randomized amount the user will pay, used to identify the transaction
+        expectedAmount: invoice.pay_amount,   // this is the actual amount the user should pay, used for record-keeping
+        invoiceId: invoice.order_id,
+        status: "pending",
+        expiresAt: new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000),
+      });
 
-          createdOrder = await this.userOrderModel.create({
-            email,
-            address: invoice.pay_address,
-            displayAmount: price_amount,
-            expectedAmount: invoice.pay_amount,
-            invoiceId: invoice.order_id,
-            status: "pending",
-            expiresAt: new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000),
-          });
-
-          break;
-        } catch (err: any) {
-          if (err.code !== 11000) throw err; // duplicate error
-        }
-      }
-
-      if (!createdOrder) throw new InternalServerErrorException('Failed to create payment invoice after multiple attempts. Please try again later.')
+      await newUserOrder.save();
 
       return {
-        message: "Payment address generated successfully",
-        order: createdOrder
+        message: "Payment invoice generated successfully",
+        order: newUserOrder
       };
 
     } catch (err: any) {
