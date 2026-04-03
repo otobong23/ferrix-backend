@@ -8,13 +8,13 @@ export class UserOrder {
   @Prop({ type: String, required: true })
   invoiceId: string;
 
-  @Prop({ type: String })
-  paymentID: string;
+  // @Prop({ type: String })
+  // paymentID: string;
 
   @Prop({ type: String, ref: 'user', required: true })
   email: string;
 
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number, required: true, unique: true })
   displayAmount: number;
 
   @Prop({ type: Number })
@@ -29,13 +29,13 @@ export class UserOrder {
   @Prop({ type: String })
   address: string;
 
-  @Prop({ type: String })
-  ipn_callback_url: string;
+  // @Prop({ type: String })
+  // ipn_callback_url: string;
 
-  @Prop({ type: String })
-  invoice_url: string;
+  // @Prop({ type: String })
+  // invoice_url: string;
 
-  @Prop({ type: String })
+  @Prop({ type: String, unique: true })
   referenceID: string;
 
   @Prop({ type: Date, required: true })

@@ -3,7 +3,7 @@ import { AdminService } from './admin.service';
 import { AdminLoginDto, AdminUpdateDto, UpdateTransactionDto } from './dto/create-admin.dto';
 import { JwtAuthGuard } from 'src/common/strategies/jwt-auth.guard';
 import { UpdateProfileDto } from 'src/profile/dto/update-profile.dto';
-import { verifyNowPaymentsSignature } from 'src/common/helpers/verifiyPaymentSignature';
+import { verifyPaymentsSignature } from 'src/common/helpers/verifiyPaymentSignature';
 
 
 @Controller('admin')
@@ -147,89 +147,28 @@ export class AdminController {
 }
 
 
-// @Controller('webhooks/blockonomics')
-// export class BlockonomicsController {
-//   constructor(private readonly adminService: AdminService) { }
-//   private readonly logger = new Logger(BlockonomicsController.name);
 
-//   @Post()
-//   async handleWebhook(
-//     @Query('secret') secret: string,
-//     @Body() body: {
-//       status: 0 | 1 | 2;
-//       addr: string;
-//       txid: string;
-//       value: number;
-//       currency: string;
-//     },
-//   ) {
-//     // 1️⃣ Verify webhook secret
-//     if (secret !== process.env.BLOCKONOMICS_CALLBACK_SECRET) {
-//       this.logger.warn('Invalid Blockonomics webhook secret');
-//       throw new ForbiddenException('Invalid webhook secret');
-//     }
-
-//     // 2️⃣ Log payload (VERY IMPORTANT during testing)
-//     this.logger.log(`Webhook payload: ${JSON.stringify(body)}`);
-
-//     const {
-//       status,
-//       addr,
-//       txid,
-//       value,
-//       currency,
-//     } = body;
-
-//     // 3️⃣ Ignore unconfirmed payments
-//     if (status !== 2) {
-//       this.logger.warn('Order is unconfirmed, ignoring');
-//       return { ok: true };
-//     }
-
-//     // 3️⃣ Ignore BTC payments
-//     if (currency === 'BTC') {
-//       this.logger.warn('accept only USDT Payments, ignoring');
-//       return { ok: false }
-//     }
-
-//     // 4️⃣ Validate required fields
-//     if (!addr || !txid || !value) {
-//       this.logger.warn('Invalid webhook payload');
-//       return { ok: false };
-//     }
-
-//     const res = await this.adminService.ReviewTransaction({
-//       addr,
-//       txid,
-//       value
-//     });
-
-//     return res;
-//   }
-
-// }
-
-@Controller('payments')
-export class NowPaymentsController {
+@Controller('webhook')
+export class USDTPaymentsController {
   constructor(private readonly adminService: AdminService) { }
-  private readonly logger = new Logger(NowPaymentsController.name);
+  private readonly logger = new Logger(USDTPaymentsController.name);
 
-  @Post('webhooks/nowpayments')
-  async nowpaymentsWebhook(
+  @Post('usdt-payment')
+  async usdtpaymentsWebhook(
     @Req() req: any,
-    @Headers("x-nowpayments-sig") signature: string
+    @Headers("x-signature") signature: string
   ) {
 
     const rawBody = req.rawBody;
 
-    const isValid = verifyNowPaymentsSignature(rawBody, signature);
+    const isValid = verifyPaymentsSignature(rawBody, signature);
     if (!isValid) {
       throw new ForbiddenException("Invalid webhook signature");
     }
 
-    const body = JSON.parse(rawBody) as NowPaymentsWebhookPayload;
-    if (body.pay_currency !== "usdttrc20") return;
+    const body = JSON.parse(rawBody) as USDT_PaymentPayload;
+    if (body.event !== "confirmed") return;
 
-    return this.adminService.ReviewTransaction(body);
+    return this.adminService.ReviewTransaction(body.data);
   }
 }

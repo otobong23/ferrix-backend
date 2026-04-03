@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { AdminController, NowPaymentsController } from './admin.controller';
+import { AdminController, USDTPaymentsController } from './admin.controller';
 import { config } from 'dotenv';
 import { UserModule } from 'src/common/schemas/user/user.module';
 import { UserTransactionModule } from 'src/common/schemas/transaction/userTransaction.module';
@@ -15,7 +15,7 @@ config()
 
 @Module({
   imports: [ UserAdminModule, UserModule, UserOrderModule, UserTransactionModule, UserCrewModule, ProfileModule, TransactionModule, CrewModule ],
-  controllers: [AdminController, NowPaymentsController],
+  controllers: [AdminController, USDTPaymentsController],
   providers: [AdminService, JwtStrategy],
 })
 export class AdminModule {}

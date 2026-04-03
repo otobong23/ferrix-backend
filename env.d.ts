@@ -13,9 +13,8 @@ declare namespace NodeJS {
 
     GOOGLE_Client_ID: string;
     GOOGLE_Client_Secret: string;
-
-    BLOCKONOMICS_API_KEY: string;
-    BLOCKONOMICS_CALLBACK_SECRET: string;
+    
+    USDT_PAYMENT_GATEWAY_SECRET: string;
 
     NOWPAYMENTS_API_KEY: string;
     NOWPAYMENTS_IPN_SECRET_KEY: string;

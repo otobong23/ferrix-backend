@@ -12,6 +12,7 @@ import { firstValueFrom } from 'rxjs';
 import axios from 'axios';
 import { UserOrder, UserOrderDocument } from 'src/common/schemas/order/userOrder.schema';
 import { AxiosError } from 'axios';
+import { VARIABLES } from 'src/common/constant/variables/variables';
 config();
 
 const to = process.env.EMAIL_USER
@@ -49,52 +50,48 @@ export class TransactionService {
 
     try {
 
-      const normalizedAmount = Number(amount.toFixed(3));
+      const fixedAmount = Number(amount);
 
-      const response = await axios.post(
-        // `${this.apiUrl}/invoice`,
-        `${this.apiUrl}/payment`,
-        {
-          price_amount: normalizedAmount,
-          price_currency: "usd", // or usdt if you prefer
-          pay_currency: "usdttrc20",
-          order_id: crypto.randomUUID(),
-          order_description: "User deposit",
-          ipn_callback_url: `${process.env.BACKEND_URL}/payments/webhooks/nowpayments`
-        },
-        {
-          headers: {
-            "x-api-key": process.env.NOWPAYMENTS_API_KEY,
-            "Content-Type": "application/json"
-          }
+      let retries = 3;
+
+      let createdOrder;
+
+      const invoice = {
+        pay_address: VARIABLES.DEPOSIT_WALLET_ADDRESS,
+        pay_amount: fixedAmount,
+        order_id: crypto.randomUUID(),
+      };
+
+      for (let i = 0; i < retries; i++) {
+        try {
+          const offset = Math.floor(Math.random() * 90) + 10;
+          const price_amount = fixedAmount + offset;
+
+          createdOrder = await this.userOrderModel.create({
+            email,
+            address: invoice.pay_address,
+            displayAmount: price_amount,
+            expectedAmount: invoice.pay_amount,
+            invoiceId: invoice.order_id,
+            status: "pending",
+            expiresAt: new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000),
+          });
+
+          break;
+        } catch (err: any) {
+          if (err.code !== 11000) throw err; // duplicate error
         }
-      );
+      }
 
-      const invoice = response.data;
-      console.log(invoice)
-
-      const newUserOrder = new this.userOrderModel({
-        email,
-        address: invoice.pay_address,
-        displayAmount: invoice.pay_amount,
-        expectedAmount: invoice.price_amount || amount,
-        invoice_url: invoice.invoice_url,
-        ipn_callback_url: invoice.ipn_callback_url,
-        invoiceId: invoice.id || invoice.order_id,
-        paymentID: invoice.payment_id,
-        status: "pending",
-        expiresAt: new Date(invoice.expiration_estimate_date) || new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000),
-      });
-
-      await newUserOrder.save();
+      if (!createdOrder) throw new InternalServerErrorException('Failed to create payment invoice after multiple attempts. Please try again later.')
 
       return {
         message: "Payment address generated successfully",
-        order: newUserOrder
+        order: createdOrder
       };
 
-    } catch (err) {
-      console.error("NOWPayments error:", err?.response?.data || err);
+    } catch (err: any) {
+      console.error("Payment Address error:", err?.message || err);
       throw new InternalServerErrorException("Failed to create payment invoice");
     }
   }
@@ -307,7 +304,7 @@ export class TransactionService {
         )
       );
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(error.response?.data || 'Flutterwave error', error.response?.status || 500);
     }
   }
@@ -328,7 +325,7 @@ export class TransactionService {
         await newTransaction.save()
         await existingUser.save();
         return existingUser.balance;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error processing spin reward:', err)
         throw new InternalServerErrorException('An error occurred while processing your spin reward. please try again later. Error: ' + err.message)
       }

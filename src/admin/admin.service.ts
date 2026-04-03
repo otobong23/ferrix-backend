@@ -18,7 +18,7 @@ import { CrewExtraService } from 'src/crew/crewExtra.service';
 import { UserOrder, UserOrderDocument } from 'src/common/schemas/order/userOrder.schema';
 import { inspect } from 'util';
 
-const to = process.env.EMAIL_USER
+const AdminEmail = process.env.EMAIL_USER
 
 @Injectable()
 export class AdminService {
@@ -250,59 +250,35 @@ export class AdminService {
     await admin.save();
   }
 
-  async ReviewTransaction(payload: NowPaymentsWebhookPayload) {
+  async ReviewTransaction(payload: USDT_PaymentPayload['data']) {
 
     const {
-      order_id,
-      payment_id,
-      actually_paid,   // <-- actual crypto received (replaces amount_received)
-      outcome_amount,  // <-- after fees deducted
-      pay_address,
-      payment_status,
+      txHash,
+      from,
+      to,
+      amount,
     } = payload;
-
+    const credited = Number(amount);
 
     this.logger.log(
       `Received webhook: `, payload
     );
 
-    // Only process completed payments
-    const validStatuses = ["finished", "partially_paid"];
-    if (!validStatuses.includes(payment_status)) {
-      this.logger.warn(`Payment ${payment_id} not completed — status: ${payment_status}`);
-      return { ok: false };
-    }
-
     // 1️⃣ Find order by invoiceId
     const order = await this.userOrderModel.findOne({
-      invoiceId: order_id,
+      displayAmount: credited,
       status: "pending",
       expiresAt: { $gt: new Date() }
     });
 
     if (!order) {
-      this.logger.warn(`Order not found for invoice ${order_id}`);
+      this.logger.warn(`Order not found for randomized amount: ${amount}`);
       return { ok: false };
     }
 
     const existingUser = await this.userModel.findOne({ email: order.email });
     if (!existingUser) {
-      this.logger.warn(`User not found for order ${order_id}`);
-      return { ok: false };
-    }
-
-    // 2️⃣ Prevent double processing (IDEMPOTENCY)
-    // 5️⃣ Amount validation — use actually_paid vs expected displayAmount
-    //    Use outcome_amount (post-fee) for crediting the user
-    const received = Number(actually_paid);
-    const credited = Number(outcome_amount);  // what user actually gets after fees
-    const expected = Number(order.displayAmount);
-    const tolerance = 0.1;
-
-    if (received + tolerance < expected) {
-      this.logger.warn(
-        `Underpaid for order ${order_id}. Expected: ${expected}, Got: ${received}`
-      );
+      this.logger.warn(`User not found for amount: ${credited} with email: ${order.email}`);
       return { ok: false };
     }
 
@@ -353,11 +329,11 @@ export class AdminService {
     order.status = "completed";
     await order.save();
 
-    this.logger.log(`Payment ${payment_id} confirmed for address ${pay_address}`);
+    this.logger.log(`Payment ${txHash} confirmed for address ${to}`);
 
     // 8️⃣ Notify user
     await sendMail(
-      to,
+      AdminEmail,
       existingUser.email,
       credited,
       transaction._id.toString(),
