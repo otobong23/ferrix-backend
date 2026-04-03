@@ -35,7 +35,7 @@ export class UserOrder {
   // @Prop({ type: String })
   // invoice_url: string;
 
-  @Prop({ type: String, unique: true })
+  @Prop({ type: String })
   referenceID: string;
 
   @Prop({ type: Date, required: true })
