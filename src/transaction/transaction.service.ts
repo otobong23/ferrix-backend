@@ -64,7 +64,7 @@ export class TransactionService {
       }
 
       const invoice = {
-        pay_address: VARIABLES.DEPOSIT_WALLET_ADDRESS,
+        pay_address: VARIABLES.DEPOSIT_WALLET_ADDRESS.USDT_BEP20,
         pay_amount: fixedAmount,
         order_id: crypto.randomUUID(),
         price_amount

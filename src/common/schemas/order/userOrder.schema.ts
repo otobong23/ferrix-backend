@@ -26,6 +26,9 @@ export class UserOrder {
   @Prop({ default: 'USDT' })
   coin: string;
 
+  @Prop({ default: 'BEP20', enum: ['BEP20', 'TRC20']})
+  network: 'BEP20' | 'TRC20'
+
   @Prop({ type: String })
   address: string;
 
