@@ -1,8 +1,8 @@
 import { BadRequestException, ConflictException, ForbiddenException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { DepositDto, WithdrawDto } from './dto/transaction.dto';
-import { User, UserDocument } from 'src/common/schemas/user/user.schema';
+import { CreateEarnerDTO, DepositDto, WithdrawDto } from './dto/transaction.dto';
+import { Tier, User, UserDocument } from 'src/common/schemas/user/user.schema';
 import { sendMail } from 'src/common/helpers/mailer';
 import { UserTransaction, UserTransactionDocument } from 'src/common/schemas/transaction/userTransaction.schema';
 import { CrewService } from 'src/crew/crew.service';
@@ -13,6 +13,7 @@ import axios from 'axios';
 import { UserOrder, UserOrderDocument } from 'src/common/schemas/order/userOrder.schema';
 import { AxiosError } from 'axios';
 import { VARIABLES } from 'src/common/constant/variables/variables';
+import { Earner, EarnerDocument } from 'src/common/schemas/earners/earner.schema';
 config();
 
 const to = process.env.EMAIL_USER
@@ -24,6 +25,7 @@ export class TransactionService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(UserOrder.name) private readonly userOrderModel: Model<UserOrderDocument>,
     @InjectModel(UserTransaction.name) private readonly transactionModel: Model<UserTransactionDocument>,
+    @InjectModel(Earner.name) private earnerModel: Model<EarnerDocument>,
     private crewService: CrewService,
     private readonly httpService: HttpService
   ) { }
@@ -37,7 +39,12 @@ export class TransactionService {
     return user;
   }
 
-  private readonly apiUrl = 'https://api.nowpayments.io/v1';
+  private DURATION = 24 * 60 * 60 * 1000 //24 hours
+
+  private handleDailyYield = (param: Tier[] = []) => param.reduce((total, plan) => {
+    const price = Number(plan.daily_rate);
+    return total + price;
+  }, 0);
 
   async generatePaymentAddress(amount: number, email: string): Promise<{ message: string, order: UserOrderDocument }> {
 
@@ -215,53 +222,75 @@ export class TransactionService {
     };
   }
 
-  async mine(email: string, amount: number) {
+  // async mine(email: string, amount: number) {
+  //   const now = Date.now();
+  //   const duration = 24 * 60 * 60 * 1000;
+  //   // const duration = 1 * 1 * 60 * 1000 //1 minutes
+
+
+  //   const user = await this.userModel.findOneAndUpdate(
+  //     {
+  //       email,
+  //       ActivateBot: true,
+  //       twentyFourHourTimerStart: { $ne: '' },
+  //       $expr: {
+  //         $lte: [
+  //           { $add: [{ $toLong: "$twentyFourHourTimerStart" }, duration] },
+  //           now,
+  //         ],
+  //       },
+  //     },
+  //     {
+  //       $inc: {
+  //         balance: amount,
+  //         totalYield: amount,
+  //       },
+  //       $set: {
+  //         twentyFourHourTimerStart: '',
+  //       },
+  //     },
+  //     { new: true }
+  //   );
+
+  //   if (!user) {
+  //     throw new BadRequestException(
+  //       'Yield already claimed or timer not finished'
+  //     );
+  //   }
+
+  //   const newTransaction = new this.transactionModel({
+  //     email,
+  //     type: 'yield',
+  //     amount,
+  //     status: 'completed',
+  //     date: new Date(),
+  //   });
+
+  //   await newTransaction.save();
+
+  //   return user.balance;
+  // }
+
+  async createEarner(email: string) {
+    const existingUser = await this.userModel.findOne({ email })
+    if (!existingUser) throw new NotFoundException('User not Found, please signup');
+
+    if (existingUser.twentyFourHourTimerStart) throw new BadRequestException("Yield already claimed or timer not finished");
+
+    if (!existingUser.currentPlan.length) return;
+    const daily_rate = this.handleDailyYield(existingUser.currentPlan)
+
     const now = Date.now();
-    const duration = 24 * 60 * 60 * 1000;
-    // const duration = 1 * 1 * 60 * 1000 //1 minutes
+    existingUser.twentyFourHourTimerStart = now.toString();
 
-
-    const user = await this.userModel.findOneAndUpdate(
-      {
-        email,
-        ActivateBot: true,
-        twentyFourHourTimerStart: { $ne: '' },
-        $expr: {
-          $lte: [
-            { $add: [{ $toLong: "$twentyFourHourTimerStart" }, duration] },
-            now,
-          ],
-        },
-      },
-      {
-        $inc: {
-          balance: amount,
-          totalYield: amount,
-        },
-        $set: {
-          twentyFourHourTimerStart: '',
-        },
-      },
-      { new: true }
-    );
-
-    if (!user) {
-      throw new BadRequestException(
-        'Yield already claimed or timer not finished'
-      );
-    }
-
-    const newTransaction = new this.transactionModel({
-      email,
-      type: 'yield',
-      amount,
-      status: 'completed',
-      date: new Date(),
+    this.earnerModel.create({
+      userID: existingUser.email,
+      daily_rate,
+      expiresAt: now + this.DURATION
     });
 
-    await newTransaction.save();
-
-    return user.balance;
+    await existingUser.save();
+    return { success: true }
   }
 
 
@@ -270,12 +299,13 @@ export class TransactionService {
     if (!existingUser) throw new NotFoundException('User not Found, please signup');
     if (existingUser.ActivateBot) {
       if (existingUser.balance < amount) {
-        throw new InternalServerErrorException('Insufficient balance for withdrawal');
+        throw new InternalServerErrorException('Insufficient balance to purchase plan');
       }
       existingUser.balance -= amount;
       const newTransaction = new this.transactionModel({ email, type: 'tier', amount, plan, status: 'completed', date: new Date() })
-      await newTransaction.save()
+      await newTransaction.save();
       await existingUser.save();
+      await this.crewService.referral_reward_on_plan_purchase(existingUser.userID);
       return existingUser.balance;
     } else {
       throw new ConflictException('Your account has been suspended. Please Vist Customer Care')

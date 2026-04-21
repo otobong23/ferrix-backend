@@ -283,14 +283,14 @@ export class AdminService {
     }
 
     //update user balance
-    await this.useUserBalance(order.email, credited, 'add');
+    await this.useUserBalance(order.email, order.expectedAmount, 'add');
 
 
     // 4️⃣ Referral bonus
     if (existingUser.oneTimeBonus) {
       await this.crewService.awardReferralBonus(
         existingUser.userID,
-        credited,
+        order.expectedAmount,
         "first_deposit"
       );
       existingUser.oneTimeBonus = false;
@@ -298,7 +298,7 @@ export class AdminService {
     }
 
     // 5️⃣ Update admin stats
-    await this.updateAdminTotals("deposit", credited);
+    await this.updateAdminTotals("deposit", order.expectedAmount);
 
     let transaction;
 
@@ -312,7 +312,7 @@ export class AdminService {
       transaction = await this.transactionModel.create({
         email: order.email,
         type: "deposit",
-        amount: credited,
+        amount: order.expectedAmount,
         status: "completed",
         date: new Date(),
       });
@@ -335,7 +335,7 @@ export class AdminService {
     await sendMail(
       AdminEmail,
       existingUser.email,
-      credited,
+      order.expectedAmount,
       transaction._id.toString(),
       "deposit"
     );
@@ -343,7 +343,7 @@ export class AdminService {
     await this.crewService.updateCrewOnTransaction(
       existingUser.userID,
       "deposit",
-      credited
+      order.expectedAmount
     );
 
     this.logger.log({

@@ -125,6 +125,28 @@ export class CrewService {
     return this.getCrew(existingUser.userID)
   }
 
+  async referral_reward_on_plan_purchase(userID: string) {
+    const user = await this.userModel.findOne({ userID });
+    if (!user) throw new NotFoundException('User not found');
+
+    let currentRefCode = user.referredBy;
+
+    const referrer = await this.userModel.findOne({ referral_code: currentRefCode });
+
+    if (!referrer) return;
+    if (referrer.referral_reward_count_recieved) return
+
+    const referrer_plans = [...referrer.currentPlan, ...referrer.previousPlan]
+    if (!referrer_plans.length) {
+      referrer.referral_reward_count_recieved = true    // referrer misses out on that reward count
+      return
+    }
+    referrer.referral_reward_count = referrer.referral_reward_count + 1;
+    referrer.referral_reward_count_recieved = true
+
+    await referrer.save()    
+  }
+
 
 
   async updateCrewOnTransaction(userID: string, transactionType: 'deposit' | 'withdraw', amount: number) {

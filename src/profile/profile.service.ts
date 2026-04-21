@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from 'src/common/schemas/user/user.schema';
+import { Tier, User, UserDocument } from 'src/common/schemas/user/user.schema';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Crew, CrewDocument } from 'src/common/schemas/crew/userCrew.schema';

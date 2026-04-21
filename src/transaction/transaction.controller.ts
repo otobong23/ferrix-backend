@@ -46,11 +46,13 @@ export class TransactionController {
     const email = req.user.email
     return this.transactionService.getPlan(email, getPlanDto.amount, getPlanDto.plan)
   }
+
   @Post('mine')
-  async mine(@Body('amount') amount: number, @Req() req) {
+  async mine(@Req() req) {
     const email = req.user.email
-    return this.transactionService.mine(email, amount)
+    return this.transactionService.createEarner(email)
   }
+
   @Post('resolve_account')
   async resolveAccount(@Body() resolveDetailsDTO: ResolveDetailsDTO) {
     return this.transactionService.resolveAccount(resolveDetailsDTO.account_number, resolveDetailsDTO.account_bank)

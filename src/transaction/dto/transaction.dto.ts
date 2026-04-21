@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsDate, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class DepositDto {
 
@@ -56,4 +56,18 @@ export class ResolveDetailsDTO{
    
    @IsNotEmpty()@IsString()
    account_bank: string;
+}
+
+export class CreateEarnerDTO {
+  @IsString()
+  @IsNotEmpty()
+  userID!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  daily_rate!: string;
+
+  @IsDate()
+  @IsNotEmpty()
+  expiresAt!: Date;
 }
