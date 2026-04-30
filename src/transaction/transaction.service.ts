@@ -39,8 +39,9 @@ export class TransactionService {
     return user;
   }
 
-  private DURATION = 24 * 60 * 60 * 1000 //24 hours
+  private DURATION_24_HOURS = 24 * 60 * 60 * 1000 //24 hours
   private DURATION_30_MINUTES = 30 * 60 * 1000
+  private DURATION = this.DURATION_30_MINUTES;
 
   private handleDailyYield = (param: Tier[] = []) => param.reduce((total, plan) => {
     const price = Number(plan.daily_rate);
