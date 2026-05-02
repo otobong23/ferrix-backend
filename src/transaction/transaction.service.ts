@@ -41,7 +41,7 @@ export class TransactionService {
 
   private DURATION_24_HOURS = 24 * 60 * 60 * 1000 //24 hours
   private DURATION_30_MINUTES = 30 * 60 * 1000
-  private DURATION = this.DURATION_30_MINUTES;
+  private DURATION = this.DURATION_24_HOURS;
 
   private handleDailyYield = (param: Tier[] = []) => param.reduce((total, plan) => {
     const price = Number(plan.daily_rate);
@@ -60,6 +60,7 @@ export class TransactionService {
     try {
 
       const fixedAmount = Number(amount);
+      this.logger.log({fixedAmount, amount})
       const offset = (Math.floor(Math.random() * 90) + 10) / 100;
       let price_amount = fixedAmount + offset;
 
