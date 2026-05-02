@@ -60,7 +60,6 @@ export class TransactionService {
     try {
 
       const fixedAmount = Number(amount);
-      this.logger.log({fixedAmount, amount})
       const offset = (Math.floor(Math.random() * 90) + 10) / 100;
       let price_amount = fixedAmount + offset;
 

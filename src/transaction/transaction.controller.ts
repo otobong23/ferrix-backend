@@ -12,6 +12,7 @@ export class TransactionController {
   @Post('create')
   async createPayment(@Req() req, @Body() body: { amount: number }) {
     const email = req.user.email;
+    console.log({ amount: body.amount })
     const order = await this.transactionService.generatePaymentAddress(body.amount, email);
 
     return order;
