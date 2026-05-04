@@ -292,7 +292,7 @@ export class TransactionService {
     });
 
     await existingUser.save();
-    return { success: true }
+    return { success: true, startTime: existingUser.twentyFourHourTimerStart }
   }
 
 
