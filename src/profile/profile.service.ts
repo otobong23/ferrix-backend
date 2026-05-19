@@ -100,6 +100,26 @@ export class ProfileService {
     }
   }
 
+  private async handleClearTwentyFourHourTimerStart(email: string): Promise<void> {
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new NotFoundException('User not found, please login');
+    }
+    if(user.twentyFourHourTimerStart){
+      const startTimeNum = parseInt(user.twentyFourHourTimerStart)
+      const now = Date.now();
+      const DURATION_24_HOURS = 24 * 60 * 60 * 1000,
+      DURATION_20_MINUTES = 20 * 60 * 1000,
+      DURATION = DURATION_24_HOURS + DURATION_20_MINUTES;
+      const endTime = startTimeNum + DURATION;
+      const diff = endTime - now;
+      if (diff <= 0) {
+        user.twentyFourHourTimerStart = ""
+      }
+      return
+    }
+  }
+
   async getUserProfileByUserID(userID: string) {
     const existingUser = await this.userModel.findOne({ userID })
     if (!existingUser) throw new NotFoundException('User not Found');
@@ -113,6 +133,11 @@ export class ProfileService {
       await this.handleVIP(email);
       await this.handleMeter(email)
       await this.handleExpiredPlans(email)
+      try {
+        await this.handleClearTwentyFourHourTimerStart(email)
+      } catch (error) {
+        console.error(error)
+      }
       if (existingAdmin) {
         existingUser.depositAddress = existingAdmin.walletAddress
       }
