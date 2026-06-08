@@ -148,21 +148,19 @@ export class CrewService {
     await user.save() 
 
     try{
-      const referrerCrew = await this.crewModel.findOne({ userID: referrer?.userID });
-      if (!referrerCrew) return;
-
-      const referrerCrewTotalMembers = referrerCrew.totalMembers || 0;
       let level = 0;
 
-      if (referrer.referral_reward_count >= 10 && referrerCrewTotalMembers >= 50) level = 1;
-      else if (referrer.referral_reward_count >= 30 && referrerCrewTotalMembers >= 100) level = 2;
-      else if (referrer.referral_reward_count >= 50 && referrerCrewTotalMembers >= 100) level = 3;
+      if (referrer.referral_reward_count >= 10) level = 1;
+      else if (referrer.referral_reward_count >= 30) level = 2;
+      else if (referrer.referral_reward_count >= 50) level = 3;
       else return;
 
       if (referrer.referral_reward_level === level) return; // already at that level, no need to update
 
       referrer.referral_reward_level = level;
-      referrer.balance = referrer.balance + (level == 1 ? 10 : level == 2 ? 30 : level == 3 ? 50 : 0)
+      referrer.balance = referrer.balance + (level == 1 ? 5 : level == 2 ? 10 : level == 3 ? 15 : 0)
+      const newTransaction = new this.transactionModel({ email: referrer.email, type: 'bonus', amount: (level == 1 ? 5 : level == 2 ? 10 : level == 3 ? 15 : 0), status: 'completed', date: new Date() })
+      await newTransaction.save()
       await referrer.save()
     }catch (e) {
       console.error(e)
