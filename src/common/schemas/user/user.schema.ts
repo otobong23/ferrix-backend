@@ -117,6 +117,9 @@ export class User {
   @Prop({ type: Number, default: 0 })
   referral_reward_count: number;
 
+  @Prop({ type: Number, default: 0 })
+  referral_reward_level: number;
+
   @Prop({ type: Boolean, default: false })
   referral_reward_count_recieved: boolean;
 

@@ -132,9 +132,11 @@ export class CrewService {
     let currentRefCode = user.referredBy;
 
     const referrer = await this.userModel.findOne({ referral_code: currentRefCode });
-
+    
     if (!referrer) return;
     if (user.referral_reward_count_recieved) return
+
+    const referrerCrew = await this.crewModel.findOne({ userID: referrer?.userID });
 
     const referrer_plans = [...referrer.currentPlan, ...referrer.previousPlan]
     if (!referrer_plans.length) {
@@ -146,6 +148,26 @@ export class CrewService {
 
     await referrer.save()   
     await user.save() 
+
+    try{
+      if (!referrerCrew) return;
+
+      const referrerCrewTotalMembers = referrerCrew.totalMembers || 0;
+      let level = 0;
+
+      if (referrer.referral_reward_count >= 10 && referrerCrewTotalMembers >= 50) level = 1;
+      else if (referrer.referral_reward_count >= 30 && referrerCrewTotalMembers >= 100) level = 2;
+      else if (referrer.referral_reward_count >= 50 && referrerCrewTotalMembers >= 100) level = 3;
+      else return;
+
+      if (referrer.referral_reward_level === level) return; // already at that level, no need to update
+
+      referrer.referral_reward_level = level;
+      referrer.balance = referrer.balance + (level == 1 ? 10 : level == 2 ? 30 : level == 3 ? 50 : 0)
+      await referrer.save()
+    }catch (e) {
+      console.error(e)
+    }
   }
 
 
