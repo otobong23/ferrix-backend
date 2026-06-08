@@ -136,8 +136,6 @@ export class CrewService {
     if (!referrer) return;
     if (user.referral_reward_count_recieved) return
 
-    const referrerCrew = await this.crewModel.findOne({ userID: referrer?.userID });
-
     const referrer_plans = [...referrer.currentPlan, ...referrer.previousPlan]
     if (!referrer_plans.length) {
       user.referral_reward_count_recieved = true    // referrer misses out on that reward count
@@ -150,6 +148,7 @@ export class CrewService {
     await user.save() 
 
     try{
+      const referrerCrew = await this.crewModel.findOne({ userID: referrer?.userID });
       if (!referrerCrew) return;
 
       const referrerCrewTotalMembers = referrerCrew.totalMembers || 0;
