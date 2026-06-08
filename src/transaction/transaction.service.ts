@@ -176,7 +176,7 @@ export class TransactionService {
         if (pendingWithdrawal) throw new ConflictException('You have a pending Withdrawal request. Please wait for it to be processed before making another request.');
 
         existingUser.balance -= amount;
-        const percent = Number(amount) * 0.12
+        const percent = Number(amount) * 0.10
         const newTransaction = new this.transactionModel({ email, type: 'withdrawal', amount, status: 'pending', withdrawWalletAddress: walletAddress, date: new Date(), displayAmount: amount - percent }) as UserTransactionDocument & { _id: any };
         await newTransaction.save();
         const mailSent = await sendMail(to, existingUser.email, amount - percent, newTransaction._id.toString(), 'withdrawal')
