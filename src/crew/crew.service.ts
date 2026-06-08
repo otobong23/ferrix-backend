@@ -134,17 +134,18 @@ export class CrewService {
     const referrer = await this.userModel.findOne({ referral_code: currentRefCode });
 
     if (!referrer) return;
-    if (referrer.referral_reward_count_recieved) return
+    if (user.referral_reward_count_recieved) return
 
     const referrer_plans = [...referrer.currentPlan, ...referrer.previousPlan]
     if (!referrer_plans.length) {
-      referrer.referral_reward_count_recieved = true    // referrer misses out on that reward count
+      user.referral_reward_count_recieved = true    // referrer misses out on that reward count
       return
     }
     referrer.referral_reward_count = referrer.referral_reward_count + 1;
-    referrer.referral_reward_count_recieved = true
+    user.referral_reward_count_recieved = true
 
-    await referrer.save()    
+    await referrer.save()   
+    await user.save() 
   }
 
 
