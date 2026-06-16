@@ -142,7 +142,7 @@ const HelpMessageMail: React.FC<HelpMessageProps> = ({
   message,
   timestamp = new Date().toLocaleString(),
 }) => {
-  const dashboard = 'https://www.ferrix.app/admin/dashboard';
+  const dashboard = 'https://www.ferrixx.app/admin/dashboard';
 
   return (
     <div style={styles.body}>

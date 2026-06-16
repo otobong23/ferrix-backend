@@ -251,9 +251,9 @@ const TransactionStatusEmail: React.FC<TransactionStatusEmailProps> = ({
   reason,
   processingTime = "5-10 minutes"
 }) => {
-  const dashboard = 'https://www.ferrix.app/dashboard';
-  const transactions = 'https://www.ferrix.app/profile/transactions';
-  const support = 'https://www.ferrix.app/dashboard/help-center';
+  const dashboard = 'https://www.ferrixx.app/dashboard';
+  const transactions = 'https://www.ferrixx.app/profile/transactions';
+  const support = 'https://www.ferrixx.app/dashboard/help-center';
 
   const isApproved = status === 'approved';
   const isDeclined = status === 'declined';

@@ -56,7 +56,7 @@ const EmailTemplate: React.FC<EmailTemplateProps> = ({ username, code }) => {
         </div>
         {/* <img src={mail_image} alt="Envelope Icon" style={styles.icon} /> */}
         <h1 style={styles.h1}>Hi! {username}</h1>
-        <p style={styles.p}><a href="https://ferrix.app/">Welcome to Ferrix</a></p>
+        <p style={styles.p}><a href="https://ferrixx.app/">Welcome to Ferrix</a></p>
         <p style={styles.p}>
           Ferrix is a trading company where you can be a part of the peer-to-peer exchange community worldwide. Using modern business methods and person-to-person client approach, we offer a unique investment model to traders of bitcoin and other methods.
         </p>

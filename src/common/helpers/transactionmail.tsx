@@ -169,8 +169,8 @@ const TransactionMail: React.FC<EmailTemplateProps> = ({
   coin = "USDT",
   timestamp = new Date().toLocaleString()
 }) => {
-  const review = 'https://www.ferrix.app/admin/transactions'
-  const dashboard = 'https://www.ferrix.app/admin/dashboard'
+  const review = 'https://www.ferrixx.app/admin/transactions'
+  const dashboard = 'https://www.ferrixx.app/admin/dashboard'
   return (
     <div style={styles.body}>
       <div style={styles.container}>
