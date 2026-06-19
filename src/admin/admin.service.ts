@@ -161,27 +161,55 @@ export class AdminService {
     return this.profileService.getUserProfileByUserID(userID)
   }
 
-  async getTransactions(limit: number = 50, page: number = 1) {
-    limit = Math.max(1, Math.min(limit, 100))
-    page = Math.max(1, page)
+  // async getTransactions(limit: number = 50, page: number = 1) {
+  //   limit = Math.max(1, Math.min(limit, 100))
+  //   page = Math.max(1, page)
+  //   const offset = (page - 1) * limit;
+  //   const [transactions, total] = await Promise.all([
+  //     this.transactionModel.find({ type: { $in: ['withdrawal', 'deposit'] } })
+  //       .sort({ date: -1 })
+  //       .limit(limit)
+  //       .skip(offset)
+  //       .exec(),
+  //     this.transactionModel.countDocuments({ type: { $in: ['withdrawal', 'deposit'] } })
+  //   ]);
+  //   const totalPages = total === 0 ? 1 : Math.ceil(total / limit);
+  //   return {
+  //     transactions,
+  //     page,
+  //     limit,
+  //     totalPages,
+  //     total
+  //   };
+  // }
+
+
+  async getTransactions(limit: number = 50, page: number = 1, type?: string, status?: string) {
+    limit = Math.max(1, Math.min(limit, 100));
+    page = Math.max(1, page);
     const offset = (page - 1) * limit;
-    const [transactions, total] = await Promise.all([
-      this.transactionModel.find({ type: { $in: ['withdrawal', 'deposit'] } })
-        .sort({ date: -1 })
-        .limit(limit)
-        .skip(offset)
-        .exec(),
-      this.transactionModel.countDocuments({ type: { $in: ['withdrawal', 'deposit'] } })
-    ]);
-    const totalPages = total === 0 ? 1 : Math.ceil(total / limit);
-    return {
-      transactions,
-      page,
-      limit,
-      totalPages,
-      total
+
+    const query: Record<string, any> = {
+      type: { $in: ['withdrawal', 'deposit'] },
     };
+
+    if (type === 'deposit' || type === 'withdrawal') {
+      query.type = type;
+    }
+
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    const [transactions, total] = await Promise.all([
+      this.transactionModel.find(query).sort({ date: -1 }).limit(limit).skip(offset).exec(),
+      this.transactionModel.countDocuments(query),
+    ]);
+
+    const totalPages = total === 0 ? 1 : Math.ceil(total / limit);
+    return { transactions, page, limit, totalPages, total };
   }
+
 
   async getUserTransactions(email: string, limit: number = 50, page: number = 1) {
     return this.transactionService.getTransactionHistory(email, limit, page)

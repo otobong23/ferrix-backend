@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, Put, ParseIntPipe, Logger, ForbiddenException, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, Put, ParseIntPipe, Logger, ForbiddenException, Headers, DefaultValuePipe } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AdminLoginDto, AdminUpdateDto, UpdateTransactionDto } from './dto/create-admin.dto';
 import { JwtAuthGuard } from 'src/common/strategies/jwt-auth.guard';
@@ -98,14 +98,26 @@ export class AdminController {
   }
 
   // ─────────────── TRANSACTIONS ───────────────
+  // @UseGuards(JwtAuthGuard)
+  // @Get('transactions')
+  // async getTransactions(
+  //   @Query('limit', ParseIntPipe) limit = 50,
+  //   @Query('page', ParseIntPipe) page = 1
+  // ) {
+  //   return await this.adminService.getTransactions(limit, page);
+  // }
+
   @UseGuards(JwtAuthGuard)
   @Get('transactions')
   async getTransactions(
-    @Query('limit', ParseIntPipe) limit = 50,
-    @Query('page', ParseIntPipe) page = 1
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('type') type?: string,
+    @Query('status') status?: string,
   ) {
-    return await this.adminService.getTransactions(limit, page);
+    return await this.adminService.getTransactions(limit, page, type, status);
   }
+
 
   @UseGuards(JwtAuthGuard)
   @Get('transactions/users')

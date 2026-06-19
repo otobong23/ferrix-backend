@@ -27,7 +27,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://ferrixx.app', 'https://www.ferrixx.app'], // allow requests from your frontend
+    origin: ['http://localhost:3000', 'https://ferrixx.app', 'https://www.ferrixx.app', 'https://ferrix.app', 'https://www.ferrix.app'], // allow requests from your frontend
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,               // allow cookies/auth headers if needed
   });
