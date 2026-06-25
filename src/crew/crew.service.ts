@@ -159,7 +159,7 @@ export class CrewService {
 
       referrer.referral_reward_level = level;
       referrer.balance = referrer.balance + (level == 1 ? 5 : level == 2 ? 10 : level == 3 ? 15 : 0)
-      const newTransaction = new this.transactionModel({ email: referrer.email, type: 'bonus', amount: (level == 1 ? 5 : level == 2 ? 10 : level == 3 ? 15 : 0), status: 'completed', date: new Date() })
+      const newTransaction = new this.transactionModel({ email: referrer.email, userId: referrer.userID, type: 'bonus', amount: (level == 1 ? 5 : level == 2 ? 10 : level == 3 ? 15 : 0), status: 'completed', date: new Date() })
       await newTransaction.save()
       await referrer.save()
     }catch (e) {
@@ -253,6 +253,7 @@ export class CrewService {
       // 🧾 Create transaction record for the bonus
       const bonusTransaction = new this.transactionModel({
         email: referrer.email,
+        userId: referrer.userID,
         type: 'bonus',
         amount: bonusAmount,
         status: 'completed',

@@ -81,6 +81,7 @@ export class TransactionService {
 
       const newUserOrder = new this.userOrderModel({
         email,
+        userId: existingUser.userID,
         address: invoice.pay_address,
         displayAmount: invoice.price_amount,  // this is the randomized amount the user will pay, used to identify the transaction
         expectedAmount: invoice.pay_amount,   // this is the actual amount the user should pay, used for record-keeping
@@ -110,7 +111,7 @@ export class TransactionService {
     if (order.email !== email) throw new ForbiddenException('You are not authorized to confirm this deposit');
     if (order.status !== 'pending') throw new BadRequestException('This order has already been processed');
     if (order.referenceID) return { message: 'This order has already been processed', success: false, redirect: true };
-    const newTransaction = new this.transactionModel({ orderID, email, type: 'deposit', amount: order.displayAmount, status: 'pending', date: new Date() }) as UserTransactionDocument & { _id: any };
+    const newTransaction = new this.transactionModel({ orderID, email, userId: existingUser.userID, type: 'deposit', amount: order.displayAmount, status: 'pending', date: new Date() }) as UserTransactionDocument & { _id: any };
     await newTransaction.save();
 
     order.referenceID = newTransaction._id.toString();
@@ -177,7 +178,7 @@ export class TransactionService {
 
         existingUser.balance -= amount;
         const percent = Number(amount) * 0.10
-        const newTransaction = new this.transactionModel({ email, type: 'withdrawal', amount, status: 'pending', withdrawWalletAddress: walletAddress, date: new Date(), displayAmount: amount - percent }) as UserTransactionDocument & { _id: any };
+        const newTransaction = new this.transactionModel({ email, userId: existingUser.userID, type: 'withdrawal', amount, status: 'pending', withdrawWalletAddress: walletAddress, date: new Date(), displayAmount: amount - percent }) as UserTransactionDocument & { _id: any };
         await newTransaction.save();
         const mailSent = await sendMail(to, existingUser.email, amount - percent, newTransaction._id.toString(), 'withdrawal')
         if (!mailSent) {
@@ -304,7 +305,7 @@ export class TransactionService {
         throw new InternalServerErrorException('Insufficient balance to purchase plan');
       }
       existingUser.balance -= amount;
-      const newTransaction = new this.transactionModel({ email, type: 'tier', amount, plan, status: 'completed', date: new Date() })
+      const newTransaction = new this.transactionModel({ email, userId: existingUser.userID, type: 'tier', amount, plan, status: 'completed', date: new Date() })
       await newTransaction.save();
       await existingUser.save();
       await this.crewService.referral_reward_on_plan_purchase(existingUser.userID);
@@ -350,7 +351,7 @@ export class TransactionService {
       try {
         existingUser.balance += amount;
         existingUser.spinWheelTimerStart = Date.now();
-        const newTransaction = new this.transactionModel({ email, type: 'check-in', amount, status: 'completed', date: new Date() })
+        const newTransaction = new this.transactionModel({ email, userId: existingUser.userID, type: 'check-in', amount, status: 'completed', date: new Date() })
         await newTransaction.save()
         await existingUser.save();
         return existingUser.balance;
