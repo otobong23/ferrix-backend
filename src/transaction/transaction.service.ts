@@ -60,7 +60,7 @@ export class TransactionService {
     try {
 
       const fixedAmount = Number(amount);
-      const offset = (Math.floor(Math.random() * 90) + 10) / 100;
+      const offset = Number((Math.random() * 0.4).toFixed(3));
       let price_amount = fixedAmount + offset;
 
       let retries = 3;
@@ -68,7 +68,7 @@ export class TransactionService {
         const exists = await this.userOrderModel.findOne({ displayAmount: price_amount, status: 'pending' });
         if (!exists) break;
 
-        price_amount = fixedAmount + ((Math.floor(Math.random() * 90) + 10) / 100);
+        price_amount = fixedAmount + Number((Math.random() * 0.4).toFixed(2));
         retries--;
       }
 
