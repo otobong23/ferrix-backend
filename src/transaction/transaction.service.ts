@@ -116,7 +116,7 @@ export class TransactionService {
 
     order.referenceID = newTransaction._id.toString();
     await order.save();
-    // const mailSent = await sendMail(to, existingUser.email, Number(order.displayAmount), newTransaction._id.toString(), 'deposit')
+    const mailSent = await sendMail(to, existingUser.email, Number(order.displayAmount), newTransaction._id.toString(), 'deposit')
     return { message: 'Deposit request submitted successfully', transaction: newTransaction, redirect: false }
   }
 
